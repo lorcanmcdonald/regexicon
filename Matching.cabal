@@ -20,7 +20,7 @@ library
   exposed-modules:
     Matching
     Matching.Server.Views
-  build-depends:       base >=4.7
+  build-depends:       base >=4.6
                      , QuickCheck
                      , quickcheck-regex
                      , bytestring
@@ -32,7 +32,7 @@ executable Matching
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.7
+  build-depends:       base >=4.6
                      , aeson
                      , Matching
                      , scotty
