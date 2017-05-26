@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Matching where
 import Control.Exception
 import Control.Monad
@@ -8,10 +8,7 @@ import Test.QuickCheck (generate)
 import Test.QuickCheck.Regex (matching)
 
 newtype RegexResults = RegexResults [String]
-  deriving Generic
-
-instance ToJSON RegexResults where
-    toJSON (RegexResults l) = toJSON $ fmap toJSON l
+  deriving (ToJSON)
 
 matches :: Int -> String -> IO RegexResults
 matches n re = do

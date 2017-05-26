@@ -1,11 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Matching.Server.Views where
-import qualified Data.ByteString.Lazy as BL
+import Control.Concurrent
+import Data.ByteString.Lazy (ByteString)
+import Data.String.Conv
+import Matching
 import Text.Blaze.Html.Renderer.Utf8
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
 
-landingPage :: BL.ByteString
+landingPage :: ByteString
 landingPage = renderHtml . H.docTypeHtml $ do
     H.head $ do
         H.title "Regular Expressions"
@@ -16,3 +19,11 @@ landingPage = renderHtml . H.docTypeHtml $ do
         p "Enter regular expression"
         H.input
         ul ! class_ "results" $ ""
+
+selectMatches :: Int -> ByteString -> IO RegexResults
+selectMatches n = matches n . toS
+
+quitAfter :: Int -> IO ()
+quitAfter n = do
+  threadDelay n
+  return ()
