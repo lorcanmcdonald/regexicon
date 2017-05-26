@@ -1,35 +1,31 @@
-(function($){
-    $(function(){
-        $('body').on("keyup", "input", function(e){
-            var re = $(e.target).val();
-            console.log("re", re);
-            $.ajax("/regex/", {
-                data: re,
-                processData: false,
-                type: "POST",
-                error: function(){
-                    var $results = $(".results");
-                    $results.text("");
-                    console.log("arguments", arguments);
-                },
-                success: function(result){
-                    var $results = $(".results"),
-                        $node,
-                        i;
-                    console.log("result", result);
-                    console.log("$results", $results);
+(function($) {
+  $(function() {
+    $("body").on("keyup", "input", function(e) {
+      const re = $(e.target).val();
 
-                    $results.text("");
-                    for(i in result){
-                        if(result.hasOwnProperty(i)){
-                            $node = $("<li>");
-                            $node.text(result[i]);
-                            $results.append($node);
-                        }
-                    }
-                }
-            });
-        });
+      $.ajax("/regex/?n=5", {
+        data: re,
+        processData: false,
+        type: "POST",
+        error: function(res) {
+          const $results = $(".results");
+
+          $results.text("Error: " + res.responseText);
+        },
+        success: function(result) {
+          const $results = $(".results");
+
+          $results.text("");
+          for (const i in result) {
+            if (result.hasOwnProperty(i)) {
+              const $listItem = $("<li contenteditable>");
+
+              $listItem.text(result[i]);
+              $results.append($listItem);
+            }
+          }
+        }
+      });
     });
-
+  });
 }(jQuery));

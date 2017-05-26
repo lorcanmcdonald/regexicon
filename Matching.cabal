@@ -20,22 +20,25 @@ library
   exposed-modules:
     Matching
     Matching.Server.Views
-  build-depends:       base >=4.6
-                     , QuickCheck
-                     , quickcheck-regex
-                     , bytestring
+  build-depends:       QuickCheck
+                     , aeson
+                     , base >=4.6
                      , blaze-html
                      , blaze-markup
+                     , bytestring
+                     , quickcheck-regex
+                     , text
   default-language:    Haskell2010
 
 executable Matching
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.6
+  build-depends:       Matching
+                     , base >=4.6
                      , aeson
-                     , Matching
                      , scotty
+                     , string-conv
                      , text
                      , transformers
   hs-source-dirs:      src/Matching/Server/
