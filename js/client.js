@@ -1,6 +1,12 @@
 (function($) {
   $(function() {
-    $("body").on("keyup", "input", function(e) {
+    $("input").after("<a href=\"?q=[⎔  ]+⌲[⎔ ]+\">[⎔  ]+⌲[⎔ ]+</a>");
+    $("input").val(decodeURIComponent(window.location.search.replace("?q=", "")));
+
+    $("body").on("keyup", "input", send);
+    send({ target: $("input") });
+
+    function send (e) {
       const re = $(e.target).val();
 
       $.ajax("/regex/?n=5", {
@@ -26,6 +32,6 @@
           }
         }
       });
-    });
+    };
   });
 }(jQuery));
