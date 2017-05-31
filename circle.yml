@@ -4,6 +4,9 @@ machine:
   services:
     - docker
 
+dependencies:
+  cache_directories:
+    - ./obj
 compile:
   override:
     - ./script/build
