@@ -5,11 +5,16 @@ machine:
     - docker
 
 dependencies:
+  override:
+    - "true"
   cache_directories:
     - ./obj
 compile:
   override:
     - ./script/build
+test:
+  override:
+    - "true"
 
 deployment:
   live:
