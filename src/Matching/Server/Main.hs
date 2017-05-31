@@ -10,12 +10,21 @@ import qualified Data.Text as TL
 import qualified Data.Text.Lazy.Encoding as T
 import Matching
 import Matching.Server.Views
-import Web.Scotty as S
 import Network.HTTP.Types.Status (requestTimeout408)
+import Network.Wai.Middleware.RequestLogger
+import Web.Scotty as S
 
 main :: IO ()
-main = scotty 3000 $ do
-  get "/" . html . T.decodeUtf8 $ landingPage
+main = scotty 80 $ do
+  middleware logStdout
+  get "/" $ do
+    re <- param "q" `rescue` (\ _ -> return "")
+    n <- param "n" `rescue` (\ _ -> return 5)
+    let n' = if n <= 20 then n else 20
+    result <- liftIO $ race (quitAfter (20 * 1000)) (selectMatches n' re)
+    case result of
+      Left _ -> html . T.decodeUtf8 $ landingPage (RegexResults [])
+      Right candidates -> html . T.decodeUtf8 $ landingPage candidates
   get "/js/:file" $ do
     f <- param "file"
     file $ "./js/" <> f
