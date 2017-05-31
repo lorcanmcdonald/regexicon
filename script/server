@@ -1,0 +1,2 @@
+#!/bin/bash
+docker run -p 3000:80 --rm -ti --name candidates lorcan/regex-candidates

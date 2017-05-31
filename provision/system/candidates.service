@@ -1,0 +1,14 @@
+[Unit]
+Description=regex-candidates
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill regex-candidates
+ExecStartPre=-/usr/bin/docker rm regex-candidates
+ExecStartPre=/usr/bin/docker pull lorcan/regex-candidates
+ExecStart=/usr/bin/docker run --name regex-candidates -p 80:80 lorcan/regex-candidates
+
+[Install]
+WantedBy=multi-user.target

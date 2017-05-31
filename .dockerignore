@@ -1,0 +1,6 @@
+./dist
+.git
+**/.cabal-sandbox
+**/.cabal
+./obj/home
+./obj/cabal-sandbox
