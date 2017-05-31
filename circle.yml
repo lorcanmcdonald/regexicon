@@ -1,9 +1,8 @@
 machine:
   ghc:
-    version: 7.10.3
+  version: 7.10.3
   services:
     - docker
-
 
 compile:
   override:
