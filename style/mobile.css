@@ -1,0 +1,18 @@
+body {
+  width: auto;
+  padding: 0;
+  font-size: 44px;
+}
+
+p {
+  padding: 0 0.5em;
+}
+
+input {
+  height: 100px;
+}
+
+button {
+  height: 112px;
+  font-size: 90px;
+}

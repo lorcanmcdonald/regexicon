@@ -9,16 +9,19 @@ body {
 }
 
 ul {
-  font-family: OCR-A, Monaco, Courier, monospace;
   list-style-type: none;
   padding: 0;
+}
+
+.results {
+  font-family: OCR-A, Monaco, Courier, monospace;
 }
 
 a {
   text-decoration: none;
 }
 
-li {
+.results li {
   background: rgba(239, 186, 37, 0.5);
   color: #191919;
   font-size: 1em;
@@ -47,7 +50,6 @@ input:focus {
 form {
   display: flex;
   flex-direction: row;
-  height: 66px;
 }
 
 input {
@@ -58,4 +60,20 @@ button {
   border-width: 1px 1px 1px 0px;
   font-size: 2.7em;
   height: 78px;
+}
+
+.examples {
+  display: flex;
+  flex-direction: row;
+  line-height: 2em;
+}
+.examples span {
+}
+.examples ul {
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+}
+.examples li {
+  margin: 0 0 0 1em;
 }
