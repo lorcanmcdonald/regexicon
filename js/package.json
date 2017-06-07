@@ -1,0 +1,21 @@
+{
+  "name": "regexicon-js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lorcan McDonald <lorcan@lorcanmcdonald.com>",
+  "license": "ISC",
+  "dependencies": {
+    "cli-color": "^1.2.0",
+    "jquery": "^3.2.1",
+    "webpack": "^2.6.1"
+  },
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-env": "^1.5.1"
+  }
+}

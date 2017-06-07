@@ -7,7 +7,7 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/*
 ADD ./obj/dist/build/Matching/Matching /opt/service/
 ADD ./style /opt/service/style
-ADD ./js /opt/service/js
+ADD ./js/dist /opt/service/js
 EXPOSE 80
 WORKDIR /opt/service
 CMD /opt/service/Matching
