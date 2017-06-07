@@ -3,14 +3,15 @@ module Main where
 import Control.Concurrent.Async
 import Control.Monad.IO.Class
 import Data.Monoid
+import Data.String.Conv
+import Data.Text (Text, stripPrefix, stripSuffix)
 import qualified Data.Text.Lazy.Encoding as T
 import Matching
 import Matching.Server.Views
 import Network.HTTP.Types.Status (requestTimeout408)
+import Network.Wai.Middleware.Gzip
 import Network.Wai.Middleware.RequestLogger
 import Web.Scotty as S
-import Data.Text (Text, stripPrefix, stripSuffix)
-import Data.String.Conv
 
 main :: IO ()
 main = scotty 80 $ do

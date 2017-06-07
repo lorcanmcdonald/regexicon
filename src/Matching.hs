@@ -2,14 +2,12 @@
 module Matching where
 import Control.Exception
 import Control.Monad
-import Data.Aeson (ToJSON (..), defaultOptions, genericToEncoding, object, (.=))
-import GHC.Generics
+import Data.Aeson (ToJSON (..), object, (.=))
+import Data.String.Conv
+import Data.Text (Text)
 import Test.QuickCheck (generate)
 import Test.QuickCheck.Regex (matching)
 import Text.Regex.TDFA.ReadRegex (parseRegex)
-import Web.Scotty
-import Data.String.Conv
-import Data.Text (Text)
 
 data RegexResults = RegexTimeout
                   | RegexParseFailure String

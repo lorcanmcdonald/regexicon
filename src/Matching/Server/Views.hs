@@ -4,11 +4,11 @@ import Control.Concurrent
 import Control.Monad
 import Data.ByteString.Lazy (ByteString)
 import Data.String.Conv
+import Data.Text (Text)
 import Matching
 import Text.Blaze.Html.Renderer.Utf8
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
-import Data.Text (Text)
 
 landingPage :: RegexResults -> ByteString
 landingPage results = renderHtml . H.docTypeHtml $ do
