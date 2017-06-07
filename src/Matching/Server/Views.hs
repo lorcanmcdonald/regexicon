@@ -14,17 +14,17 @@ landingPage :: RegexResults -> ByteString
 landingPage results = renderHtml . H.docTypeHtml $ do
     H.head $ do
         H.title "Regular Expressions"
-        H.script ! src "https://code.jquery.com/jquery-2.1.3.min.js" $ ""
-        H.script ! src "/js/client.js" $ ""
+        H.meta ! A.name "viewport" ! A.content "width=device-width, initial-scale=1"
+        H.script ! src "/js/bundle.js" $ ""
         (H.link ! rel "stylesheet") ! href "style/style.css"
         (H.link ! rel "stylesheet")
           ! href "style/mobile.css"
           ! media "screen and (max-device-width: 480px)"
           ! href "mobile.css"
     H.body $ do
-        H.p "Generate random strings that match a regular expression 👇"
+        H.label ! A.for "q" $ "Generate random strings that match a regular expression 👇"
         H.form ! A.method "GET" ! A.action "/" $ do
-          H.input ! A.name "q" ! A.autofocus "" ! A.placeholder "[0-9a-f]{32}"
+          H.input ! A.name "q" ! A.id "q" ! A.autofocus "" ! A.placeholder "[0-9a-f]{32}"
           H.button "🔍"
         H.div ! A.class_ "examples" $do
           H.span "e.g.: "

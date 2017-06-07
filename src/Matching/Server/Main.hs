@@ -16,6 +16,7 @@ import Web.Scotty as S
 main :: IO ()
 main = scotty 80 $ do
   middleware logStdout
+  middleware . gzip $ def {gzipFiles = GzipCacheFolder "/tmp/" }
   get "/" $ do
     re <- param "q" `rescue` (\ _ -> return "")
     n <- param "n" `rescue` (\ _ -> return 5)
@@ -26,9 +27,11 @@ main = scotty 80 $ do
       Right candidates -> html . T.decodeUtf8 $ landingPage candidates
   get "/js/:file" $ do
     f <- param "file"
+    setHeader "Content-Type" "text/javascript"
     file $ "./js/" <> f
   get "/style/:file" $ do
     f <- param "file"
+    setHeader "Content-Type" "text/css"
     file $ "./style/" <> f
   post "/regex/" $ do
     re <- body
