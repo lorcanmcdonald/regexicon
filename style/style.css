@@ -33,7 +33,7 @@ ul {
 
 label {
   display: block;
-  height: 44px;
+  min-height: 44px;
   text-align: center;
 }
 
@@ -85,7 +85,7 @@ input {
   border: 1px solid #d0d0d0;
   color: #191919;
   font-size: 2em;
-  height: 66px;
+  min-height: 66px;
   padding: 5px;
 }
 
@@ -103,7 +103,7 @@ form {
   flex-direction: row;
   background: white;
   border-radius: 100px;
-  height: 78px;
+  min-height: 78px;
 }
 
 input {
