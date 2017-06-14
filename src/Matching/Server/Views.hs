@@ -22,7 +22,7 @@ landingPage results = renderHtml . H.docTypeHtml $ do
           ! media "screen and (max-device-width: 480px)"
           ! href "mobile.css"
     H.body $ do
-        H.label ! A.for "q" $ "Generate random strings that match a regular expression 👇"
+        H.label ! A.for "q" $ "Generate random strings which match a regular expression"
         H.form ! A.method "GET" ! A.action "/" $ do
           H.input ! A.name "q" ! A.id "q" ! A.autofocus "" ! A.placeholder "[0-9a-f]{32}"
           H.button "🔍"

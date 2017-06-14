@@ -1,8 +1,25 @@
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lato Regular'), local('Lato-Regular'), url(/font/Lato-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lato Regular'), local('Lato-Regular'), url(/font/Lato-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+
 body {
-  background: #ECECEC;
-  color: #191919;
-  font-family: Helvetica neue, Helvetica, Arial, sans-serif;
+  background: #ECF0F1;
+  color: #34495E;
+  font-family: Lato, Helvetica neue, Helvetica, Arial, sans-serif;
   font-size: 22px;
+  line-height: 44px;
   margin: auto;
   padding: 3em;
   width: 40em;
@@ -11,6 +28,13 @@ body {
 ul {
   list-style-type: none;
   padding: 0;
+  margin: 0;
+}
+
+label {
+  display: block;
+  height: 44px;
+  text-align: center;
 }
 
 .results {
@@ -19,15 +43,40 @@ ul {
 
 a {
   text-decoration: none;
+  color: #3498DB;
+}
+
+a:visited {
+  color: #9b59b6;
 }
 
 .results li {
-  background: rgba(239, 186, 37, 0.5);
-  color: #191919;
+  background: #2980B9;
+  color: white;
   font-size: 1em;
-  margin: 0.25em 0;
-  padding: 0.25em;
+  margin: 0;
+  padding: 0.5em;
   text-overflow: ellipsis;
+}
+
+.results li:nth-child(1) {
+  background: #2980B9;
+}
+
+.results li:nth-child(2) {
+  background: #27AE60;
+}
+
+.results li:nth-child(3) {
+  background: #C0392B;
+}
+
+.results li:nth-child(4) {
+  background: #D35400;
+}
+
+.results li:nth-child(5) {
+  background: #F1C40F;
 }
 
 button,
@@ -40,26 +89,38 @@ input {
   padding: 5px;
 }
 
-button:focus,
 input:focus {
   outline: none;
-  border-color: rgb(239, 186, 37);
-  border-width: 1px;
+}
+
+button:focus {
+  outline: none;
+  text-shadow: 0 9px 3px black;
 }
 
 form {
   display: flex;
   flex-direction: row;
+  background: white;
+  border-radius: 100px;
+  height: 78px;
 }
 
 input {
   width: 100%;
+  height: 100%;
+  padding: 0 0.5em;
+  background: none;
+  border: none;
 }
 
 button {
   border-width: 1px 1px 1px 0px;
   font-size: 2.7em;
-  height: 78px;
+  height: 100%;
+  padding: 3px 12px;
+  background: none;
+  border: none;
 }
 
 .examples {
@@ -67,13 +128,19 @@ button {
   flex-direction: row;
   line-height: 2em;
 }
-.examples span {
-}
+
 .examples ul {
   margin: 0;
   display: flex;
   flex-direction: row;
 }
+
 .examples li {
   margin: 0 0 0 1em;
+}
+label,
+.examples > span,
+.examples li,
+.results li {
+  padding: 7px;
 }
