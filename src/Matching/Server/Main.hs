@@ -8,7 +8,7 @@ import Data.Text (Text, stripPrefix, stripSuffix)
 import qualified Data.Text.Lazy.Encoding as T
 import Matching
 import Matching.Server.Views
-import Network.HTTP.Types.Status (requestTimeout408)
+import Network.HTTP.Types.Status (badRequest400, requestTimeout408)
 import Network.Wai.Middleware.Gzip
 import Network.Wai.Middleware.RequestLogger
 import Web.Scotty as S
@@ -42,7 +42,13 @@ main = scotty 80 $ do
       Left _ -> do
         S.status requestTimeout408
         S.text "Response was too large"
-      Right reList -> S.json reList
+      Right reList@(RegexResults _) -> S.json reList
+      Right timeout@RegexTimeout -> do
+        S.status requestTimeout408
+        S.json timeout
+      Right failure@(RegexParseFailure _) -> do
+        S.status badRequest400
+        S.json failure
 
 cleanRE :: Text -> Text
 cleanRE (stripPrefix "^" -> Just suf) = cleanREEnd suf

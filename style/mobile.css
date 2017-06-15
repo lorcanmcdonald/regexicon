@@ -10,9 +10,17 @@ p {
 
 input {
   height: 100px;
+  font-size: 1em;
+  padding: 0 0 0 0.5em;
 }
 
 button {
   height: 112px;
   font-size: 90px;
+}
+
+
+.examples,
+.examples ul {
+  flex-direction: column;
 }

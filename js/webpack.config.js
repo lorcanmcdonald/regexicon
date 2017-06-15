@@ -2,14 +2,15 @@ const clc = require("cli-color"),
   path = require("path"),
   webpack = require("webpack");
 
-const argv = require("minimist")(process.argv.slice(2));
-console.log("__dirname", __dirname);
-
-let config = {
+const config = {
   entry: {
     app: path.resolve(__dirname, "./client.js")
   },
   resolve: {
+    alias: {
+      "react": "preact-compat",
+      "react-dom": "preact-compat"
+    },
     modules: [
       __dirname,
       path.resolve(__dirname, "node_modules")
@@ -19,11 +20,13 @@ let config = {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist")
   },
+  devtool: "hidden-source-map",
   module: {
     rules: [
+      { test: /\.js$/, exclude: /node_modules/, loader: "babel-loader" },
+      { test: /\.jsx$/, exclude: /node_modules/, loader: "babel-loader" },
       { test: /\.less$/, use: [ "style-loader", "css-loader", "less-loader" ] },
-      { test: /\.scss$/, use: [ "style-loader", "css-loader", "sass-loader" ] },
-      { test: /\.js$/, exclude: /node_modules/, loader: "babel-loader" }
+      { test: /\.scss$/, use: [ "style-loader", "css-loader", "sass-loader" ] }
     ]
   },
   plugins: [
@@ -35,7 +38,6 @@ let config = {
       "globalConfig.env": "\"production\""
     }),
     new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false } })
-    // new webpack.optimize.AggressiveMergingPlugin()
   ]
 };
 

@@ -1,37 +1,10 @@
-import $ from "jquery";
+import React from "react";
+import ReactDOM from "react-dom";
+import Main from "./Components/Main.jsx";
+import queryString from "query-string";
 
-const send = (e) => {
-  const re = $(e.target).val();
+const body = document.getElementsByTagName("body");
 
-  if (re) {
-    $.ajax("/regex/?n=5", {
-      data: re,
-      processData: false,
-      type: "POST",
-      error: function(res) {
-        const $results = $(".results");
+const { q } = queryString.parse(window.location.search);
 
-        $results.text("Error: " + res.responseText);
-      },
-      success: function(result) {
-        const $results = $(".results");
-
-        $results.text("");
-        for (const i in result) {
-          if (result.hasOwnProperty(i)) {
-            const $listItem = $("<li contenteditable>");
-
-            $listItem.text(result[i]);
-            $results.append($listItem);
-          }
-        }
-      }
-    });
-  }
-};
-
-$(function() {
-  $("input").val(decodeURIComponent(window.location.search.replace("?q=", "")));
-  $("body").on("keyup", "input", send);
-  send({ target: $("input") });
-});
+ReactDOM.render(<Main query={q}/>, body[0]);

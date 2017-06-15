@@ -10,12 +10,21 @@
   "license": "ISC",
   "dependencies": {
     "cli-color": "^1.2.0",
+    "eslint-plugin-flowtype": "^2.34.0",
+    "eslint-plugin-react": "^7.1.0",
     "jquery": "^3.2.1",
-    "webpack": "^2.6.1"
+    "node-fetch": "^1.7.1",
+    "preact": "^8.1.0",
+    "preact-compat": "^3.16.0",
+    "prop-types": "^15.5.10",
+    "query-string": "^4.3.4",
+    "ramda": "^0.24.1",
+    "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
     "babel-loader": "^7.0.0",
-    "babel-preset-env": "^1.5.1"
+    "babel-preset-env": "^1.5.1",
+    "webpack": "^2.6.1"
   }
 }

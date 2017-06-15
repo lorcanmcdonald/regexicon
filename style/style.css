@@ -41,6 +41,11 @@ label {
   font-family: OCR-A, Monaco, Courier, monospace;
 }
 
+.results,
+.error {
+  margin-top: 44px;
+}
+
 a {
   text-decoration: none;
   color: #3498DB;
@@ -141,6 +146,12 @@ button {
 label,
 .examples > span,
 .examples li,
+.error,
 .results li {
   padding: 7px;
+}
+
+.error {
+  background: #e74c3c;
+  color: #ECF0F1;
 }
