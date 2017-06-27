@@ -11,6 +11,7 @@ const config = {
       react: "preact-compat",
       "react-dom": "preact-compat"
     },
+    extensions: [".js", ".jsx"],
     modules: [__dirname, path.resolve(__dirname, "node_modules")]
   },
   output: {
