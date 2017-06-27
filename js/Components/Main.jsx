@@ -3,11 +3,8 @@ import "whatwg-fetch";
 import PropTypes from "prop-types";
 import map from "ramda/src/map";
 
-const Examples = () => (
-  <div
-    className="examples"
-    key="examples-container"
-  >
+const Examples = () =>
+  <div className="examples" key="examples-container">
     <span>
       {"e.g.: "}
     </span>
@@ -23,16 +20,12 @@ const Examples = () => (
         </a>
       </li>
     </ul>
-  </div>);
+  </div>;
 
 Examples.displayName = "Examples";
 
-const SearchInput = (props) => (
-  <form
-    action="/"
-    key="Search"
-    method="GET"
-  >
+const SearchInput = props =>
+  <form action="/" key="Search" method="GET">
     <input
       autoFocus
       id="q"
@@ -44,7 +37,7 @@ const SearchInput = (props) => (
     <button>
       {"🔍"}
     </button>
-  </form>);
+  </form>;
 
 SearchInput.propTypes = {
   onKeyUp: PropTypes.Func,
@@ -53,73 +46,69 @@ SearchInput.propTypes = {
 
 SearchInput.displayName = "SearchInput";
 
-const getRegexCandidates = (query) =>
+const getRegexCandidates = query =>
   fetch("/regex/?n=5", {
     body: query,
     method: "post"
-  }).
-    then((res) => res.json());
+  }).then(res => res.json());
 
 class Main extends React.Component {
-  constructor () {
+  constructor() {
     super();
     this.handleOnKeyUp = this.handleOnKeyUp.bind(this);
     this.state = { error: [], query: "", results: [] };
   }
-  componentWillMount () {
+  componentWillMount() {
     if (this.props.query) {
       this.setState({ query: this.props.query });
-      getRegexCandidates(this.props.query).
-        then((results) => {
-          if (results.type) {
-            this.setState({ error: [ results ], results: [] });
-          } else {
-            this.setState({ error: [], results });
-          }
-        });
-    }
-  }
-  handleOnKeyUp (e) {
-    const query = e.target.value;
-
-    this.setState({ query });
-    getRegexCandidates(query).
-      then((results) => {
+      getRegexCandidates(this.props.query).then(results => {
         if (results.type) {
-          this.setState({ error: [ results ], results: [] });
+          this.setState({ error: [results], results: [] });
         } else {
           this.setState({ error: [], results });
         }
       });
+    }
   }
-  render () {
-    let results = (<Examples/>);
+  handleOnKeyUp(e) {
+    const query = e.target.value;
+
+    this.setState({ query });
+    getRegexCandidates(query).then(results => {
+      if (results.type) {
+        this.setState({ error: [results], results: [] });
+      } else {
+        this.setState({ error: [], results });
+      }
+    });
+  }
+  render() {
+    let results = <Examples />;
 
     if (this.state.error.length) {
       const lines = this.state.error[0].message.split(/\n/);
 
       results = (
         <div className="error">
-          {map((str) => <p key={`result-${str}`}>{str}</p>)(lines)}
-        </div>);
+          {map(str => <p key={`result-${str}`}>{str}</p>)(lines)}
+        </div>
+      );
     } else if (this.state.results.length) {
       results = (
         <ul className="results">
-          {map((str) =>
-            <li key={`result-${str}`}>{str}</li>)(this.state.results)}
-        </ul>);
+          {map(str => <li key={`result-${str}`}>{str}</li>)(this.state.results)}
+        </ul>
+      );
     }
     return (
       <div>
         <label htmlFor="q">
           {"Generate random strings which match a regular expression"}
         </label>
-        <SearchInput
-          onKeyUp={this.handleOnKeyUp}
-          query={this.state.query}
-        />
+        <SearchInput onKeyUp={this.handleOnKeyUp} query={this.state.query} />
         {results}
-      </div>);
+      </div>
+    );
   }
 }
 
