@@ -1,2 +1,24 @@
 #!/bin/bash
-docker run -p 3000:80 --rm -ti --name candidates lorcan/regex-candidates
+set -euo pipefail
+IFS=$'\n\t'
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
+
+set +e
+docker kill candidates
+docker rm candidates
+set -e
+
+docker run \
+  -p 3000:80 \
+  -d \
+  --rm \
+  -ti \
+  -v "$DIR/js/dist:/opt/service/js" \
+  -v "$DIR/style:/opt/service/style" \
+  --name candidates \
+  lorcan/regex-candidates
+
+pushd "$DIR/js"
+webpack --progress --watch
+popd
