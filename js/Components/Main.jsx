@@ -2,6 +2,7 @@ import React from "react";
 import "whatwg-fetch";
 import PropTypes from "prop-types";
 import map from "ramda/src/map";
+import CookieBanner from "react-cookie-banner";
 
 const Examples = () =>
   <div className="examples" key="examples-container">
@@ -102,11 +103,21 @@ class Main extends React.Component {
     }
     return (
       <div>
-        <label htmlFor="q">
-          {"Generate random strings which match a regular expression"}
-        </label>
-        <SearchInput onKeyUp={this.handleOnKeyUp} query={this.state.query} />
-        {results}
+        <CookieBanner message="Cookies are used to improve your experience" />
+        <div class="regexicon-main">
+          <label htmlFor="q">
+            {"Generate random strings which match a regular expression"}
+          </label>
+          <SearchInput onKeyUp={this.handleOnKeyUp} query={this.state.query} />
+          {results}
+        </div>
+        <div class="attribution">
+          <p>
+            <a href="http://lorcanmcdonald.com">
+              By Lorcan McDonald
+            </a>
+          </p>
+        </div>
       </div>
     );
   }

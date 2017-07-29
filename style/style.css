@@ -20,6 +20,10 @@ body {
   font-family: Lato, Helvetica neue, Helvetica, Arial, sans-serif;
   font-size: 22px;
   line-height: 44px;
+  margin: 0;
+}
+
+.regexicon-main {
   margin: auto;
   padding: 3em;
   width: 40em;
@@ -154,4 +158,11 @@ label,
 .error {
   background: #e74c3c;
   color: #ECF0F1;
+}
+
+.attribution {
+  position: absolute;
+  bottom: 0;
+  font-size: 0.5em;
+
 }
