@@ -1,4 +1,5 @@
-const clc = require("cli-color"),
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin"),
+  clc = require("cli-color"),
   path = require("path"),
   webpack = require("webpack");
 
@@ -34,9 +35,11 @@ const config = {
     }),
     new webpack.DefinePlugin({
       "globalConfig.env": '"production"'
-    }),
-    new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false } })
-  ]
+    })
+  ],
+  optimization: {
+    minimizer: [new UglifyJsPlugin()]
+  }
 };
 
 module.exports = config;

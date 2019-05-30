@@ -24,6 +24,9 @@ run_haskell cabal build
 
 pushd "$DIR/js"
 npm install
-"$DIR/js/node_modules/.bin/webpack" --config "$DIR/js/webpack.config.js"
+"$DIR/js/node_modules/.bin/webpack" \
+  --config "$DIR/js/webpack.config.js" \
+  --mode=production
+
 popd
 docker build -t lorcan/regex-candidates --file "$DIR/containers/service.Dockerfile" "$DIR"
