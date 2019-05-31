@@ -1,10 +1,10 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/redis:5.0.5-stretch
+    machine: true
     steps:
       - checkout
+      - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
       - run: ./script/update
 # machine:
 #   ghc:
