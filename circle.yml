@@ -1,24 +1,32 @@
-machine:
-  ghc:
-  version: 7.10.3
-  services:
-    - docker
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/redis:5.0.5-stretch
+    steps:
+      - checkout
+      - run: ./script/update
+# machine:
+#   ghc:
+#   version: 7.10.3
+#   services:
+#     - docker
 
-dependencies:
-  override:
-    - "true"
-  cache_directories:
-    - ./obj
-compile:
-  override:
-    - ./script/build
-test:
-  override:
-    - "true"
+# dependencies:
+#   override:
+#     - "true"
+#   cache_directories:
+#     - ./obj
+# compile:
+#   override:
+#     - ./script/build
+# test:
+#   override:
+#     - "true"
 
-deployment:
-  live:
-    branch: live
-    commands:
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - ./script/deploy
+# deployment:
+#   live:
+#     branch: live
+#     commands:
+#       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+#       - ./script/deploy
