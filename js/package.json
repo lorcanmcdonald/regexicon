@@ -1,0 +1,42 @@
+{
+  "name": "regexicon-js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lorcan McDonald <lorcan@lorcanmcdonald.com>",
+  "license": "ISC",
+  "dependencies": {
+    "cli-color": "^1.2.0",
+    "eslint-plugin-flowtype": "^2.34.0",
+    "jquery": "^3.4.0",
+    "node-fetch": "^1.7.1",
+    "preact": "^8.1.0",
+    "preact-compat": "^3.16.0",
+    "prop-types": "^15.5.10",
+    "query-string": "^4.3.4",
+    "ramda": "^0.24.1",
+    "react": "^15.6.1",
+    "react-cookie-banner": "0.0.18",
+    "react-dom": "^15.6.1",
+    "whatwg-fetch": "^2.0.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^7.2.3",
+    "babel-loader": "^7.0.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb": "^15.0.1",
+    "eslint-plugin-import": "^2.17.3",
+    "eslint-plugin-jsx-a11y": "^5.1.0",
+    "eslint-plugin-react": "^7.1.0",
+    "uglifyjs-webpack-plugin": "*",
+    "webpack": "^4.32.2",
+    "webpack-cli": "^3.3.2"
+  }
+}

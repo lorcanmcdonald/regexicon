@@ -16,3 +16,4 @@ cabal.sandbox.config
 *.hp
 obj/
 provision/playbook.retry
+node_modules

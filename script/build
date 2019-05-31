@@ -21,4 +21,12 @@ run_haskell() {
 run_haskell cabal sandbox init
 run_haskell sh -c "cabal update && cabal install --dependencies-only"
 run_haskell cabal build
-docker build -t lorcan/regex-candidates --file "$DIR/containers/service.Dockerfile" .
+
+pushd "$DIR/js"
+npm install
+"$DIR/js/node_modules/.bin/webpack" \
+  --config "$DIR/js/webpack.config.js" \
+  --mode=production
+
+popd
+docker build -t lorcan/regex-candidates --file "$DIR/containers/service.Dockerfile" "$DIR"
