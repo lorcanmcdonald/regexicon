@@ -4,4 +4,4 @@ IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../"
 
-ansible-playbook -i "$DIR/provision/inventory/hosts" "$DIR/provision/playbook.yml"
+kubectl apply -f "$DIR/provision/kubernetes-manifest.yaml"
