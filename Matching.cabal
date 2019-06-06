@@ -20,12 +20,14 @@ library
   exposed-modules:
     Matching
     Matching.Server.Views
+    Test.QuickCheck.Regex.PCRE
   build-depends:       QuickCheck
                      , aeson
                      , base >=4.6
                      , blaze-html
                      , blaze-markup
                      , bytestring
+                     , parsec
                      , quickcheck-regex
                      , regex-tdfa
                      , scotty
@@ -39,9 +41,9 @@ executable Matching
   -- other-modules:       
   -- other-extensions:    
   build-depends:       Matching
+                     , aeson
                      , async
                      , base >=4.6
-                     , aeson
                      , http-types
                      , scotty
                      , string-conv
@@ -50,4 +52,26 @@ executable Matching
                      , wai-extra
   hs-source-dirs:      src/Matching/Server/
   ghc-options: -O2 -threaded -rtsopts -with-rtsopts=-N -Wall
+  default-language:    Haskell2010
+
+
+Test-suite test-matching
+    Hs-Source-Dirs: src/Tests/
+    type: exitcode-stdio-1.0
+    Main-is: Main.hs
+
+    ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
+    Build-depends: HTF
+                  , QuickCheck
+                  , Matching == 0.1.0.0
+                  , aeson
+                  , attoparsec
+                  , base
+                  , extra
+                  , tasty >= 0.10.1
+                  , tasty-hunit
+                  , tasty-quickcheck
+                  , text
+                  , unordered-containers
+                  , vector
   default-language:    Haskell2010

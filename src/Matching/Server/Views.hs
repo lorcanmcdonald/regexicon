@@ -6,6 +6,7 @@ import Data.Monoid
 import Data.String.Conv
 import Data.Text (Text)
 import Matching
+import Test.QuickCheck.Regex.PCRE (toText)
 import Text.Blaze.Html.Renderer.Utf8
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
@@ -46,7 +47,7 @@ landingPage results = renderHtml . H.docTypeHtml $ do
           "ga('create', 'UA-100307936-1', 'auto');ga('send', 'pageview');"
   where
   toResults :: RegexResults -> [Text]
-  toResults (RegexResults candidates) = toS <$> candidates
+  toResults (RegexResults candidates) = toS . toText <$> candidates
   toResults RegexTimeout = ["Regular expression too complex to calculate"]
   toResults (RegexParseFailure _) = ["Could not parse regular expression"]
 

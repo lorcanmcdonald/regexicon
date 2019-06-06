@@ -6,12 +6,11 @@ import Data.Aeson (ToJSON (..), object, (.=))
 import Data.String.Conv
 import Data.Text (Text)
 import Test.QuickCheck (generate)
-import Test.QuickCheck.Regex (matching)
-import Text.Regex.TDFA.ReadRegex (parseRegex)
+import Test.QuickCheck.Regex.PCRE (Regex, matching, parseRegex)
 
 data RegexResults = RegexTimeout
                   | RegexParseFailure String
-                  | RegexResults [String]
+                  | RegexResults [Regex]
 
 instance ToJSON RegexResults where
   toJSON RegexTimeout = object
@@ -26,11 +25,11 @@ instance ToJSON RegexResults where
 
 matches :: Int -> String -> IO RegexResults
 matches _ "" = return . RegexResults $ []
-matches n re =
-  case parseRegex re of
+matches n reText =
+  case parseRegex . toS $ reText of
     Left msg ->
       return . RegexParseFailure $ "Could not parse regular expression: " ++ (toS . show $ msg)
-    Right _ -> do
+    Right re -> do
       candidates <- (replicateM n . generate . matching $ re) `catch` failureResult
       print . toJSON $ candidates
       return . RegexResults $ candidates

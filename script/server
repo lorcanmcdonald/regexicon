@@ -4,6 +4,8 @@ IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 
+"$DIR/script/build"
+
 set +e
 docker kill candidates
 docker rm candidates
@@ -20,5 +22,5 @@ docker run \
   lorcan/regex-candidates
 
 pushd "$DIR/js"
-webpack --progress --watch
+webpack --progress --watch --mode=development
 popd
