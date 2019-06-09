@@ -7,7 +7,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 ls -l 
 echo "$USER"
 
-chown -R "$USER" "$DIR"
 mkdir -p "$DIR/obj"
 
 run_haskell() {
@@ -16,7 +15,6 @@ run_haskell() {
       --rm \
       -e HOME=/opt/build/obj \
       -ti \
-      -u $(id -u ${USER}):$(id -g ${USER}) \
       -v "$DIR/:/opt/build" \
       -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
       -v "$DIR/obj/dist:/opt/build/dist" \
@@ -41,7 +39,9 @@ run_node() {
   set -u
 }
 
+run_haskell sh -c 'echo aaa  $USER'
 run_haskell cabal sandbox init
+sudo chown -R "$USER" "$DIR"
 run_haskell sh -c "cabal update && cabal install --dependencies-only"
 run_haskell cabal build
 
