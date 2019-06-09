@@ -4,9 +4,6 @@ IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 
-ls -l 
-echo "$USER"
-
 mkdir -p "$DIR/obj"
 
 run_haskell() {
@@ -39,7 +36,6 @@ run_node() {
   set -u
 }
 
-run_haskell sh -c 'echo aaa  $USER'
 run_haskell cabal sandbox init
 sudo chown -R "$USER" "$DIR"
 run_haskell sh -c "cabal update && cabal install --dependencies-only"
