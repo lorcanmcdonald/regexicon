@@ -13,7 +13,7 @@ run_haskell() {
       -ti \
       -v "$DIR/:/opt/build" \
       -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
-      -v "$DIR/obj/dist:/opt/build/dist" \
+      -v "$DIR/obj/dist-newstyle:/opt/build/dist-newstyle" \
       -w /opt/build \
       lorcan/haskell-build:8.6 \
         $1 $2 $3 $4 $5 $6 $7 $8 $9
