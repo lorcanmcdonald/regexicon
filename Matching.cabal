@@ -28,7 +28,6 @@ library
                      , blaze-markup
                      , bytestring
                      , parsec
-                     , quickcheck-regex
                      , regex-tdfa
                      , scotty
                      , string-conv

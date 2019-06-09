@@ -9,7 +9,7 @@ module Test.QuickCheck.Regex.PCRE
   , parseRegex
   , toText
   ) where
-import Data.Aeson
+import Data.Aeson (ToJSON (..))
 import Data.Text (Text)
 import Test.QuickCheck (Gen)
 import Text.ParserCombinators.Parsec
