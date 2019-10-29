@@ -6,6 +6,8 @@ jobs:
       - checkout
       - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
       - run: ./script/update
+      - run: ./script/test
+
 # machine:
 #   ghc:
 #   version: 7.10.3
