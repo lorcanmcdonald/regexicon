@@ -47,7 +47,7 @@ landingPage results = renderHtml . H.docTypeHtml $ do
           "ga('create', 'UA-100307936-1', 'auto');ga('send', 'pageview');"
   where
   toResults :: RegexResults -> [Text]
-  toResults (RegexResults candidates) = toS . toText <$> candidates
+  toResults (RegexResults candidates) = fmap toS candidates
   toResults RegexTimeout = ["Regular expression too complex to calculate"]
   toResults (RegexParseFailure _) = ["Could not parse regular expression"]
 

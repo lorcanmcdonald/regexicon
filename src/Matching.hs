@@ -10,7 +10,7 @@ import Test.QuickCheck.Regex.PCRE (Regex, matching, parseRegex)
 
 data RegexResults = RegexTimeout
                   | RegexParseFailure String
-                  | RegexResults [Regex]
+                  | RegexResults [String]
 
 instance ToJSON RegexResults where
   toJSON RegexTimeout = object

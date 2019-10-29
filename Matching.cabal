@@ -21,6 +21,9 @@ library
     Matching
     Matching.Server.Views
     Test.QuickCheck.Regex.PCRE
+    Test.QuickCheck.Regex.PCRE.Parse
+    Test.QuickCheck.Regex.PCRE.Render
+    Test.QuickCheck.Regex.PCRE.Types
   build-depends:       QuickCheck
                      , aeson
                      , base >=4.6
@@ -51,7 +54,7 @@ executable Matching
                      , transformers
                      , wai-extra
   hs-source-dirs:      src/Matching/Server/
-  ghc-options: -O2 -threaded -rtsopts -with-rtsopts=-N -Wall
+  ghc-options: -O2 -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
   default-language:    Haskell2010
 
 
@@ -65,9 +68,12 @@ Test-suite test-matching
                   , QuickCheck
                   , Matching == 0.1.0.0
                   , aeson
+                  , ansi-terminal
                   , attoparsec
                   , base
                   , extra
+                  , regex-pcre
+                  , string-conv
                   , tasty >= 0.10.1
                   , tasty-hunit
                   , tasty-quickcheck

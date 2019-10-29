@@ -1,93 +1,54 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Test.QuickCheck.Regex.PCRE
   ( Regex (..)
   , RegexCharacter (..)
   , MetaCharacter (..)
   , Quantifiable (..)
   , CharacterClassCharacter (..)
+  , OrderedRange
   , matching
   , parseRegex
   , toText
+  , extractRange
   ) where
-import Data.Aeson
-import Data.Text (Text)
-import Test.QuickCheck (Gen)
-import Text.ParserCombinators.Parsec
+import Test.QuickCheck
+import Test.QuickCheck.Regex.PCRE.Parse
+import Test.QuickCheck.Regex.PCRE.Render
+import Test.QuickCheck.Regex.PCRE.Types
 
-data Regex
-  = Regex [RegexCharacter]
-  | Alternative Regex Regex
-  deriving (Eq, Show)
+matching :: Regex -> Gen String
+matching (Regex reChar) = charList reChar
+matching (Alternative re1 re2) = oneof [matching re1, matching re2]
+matching (StartOfString reChar) = charList reChar
+matching (EndOfString reChar) = charList reChar
+matching (StartAndEndOfString reChar) = charList reChar
 
-data RegexCharacter
-  = Quant Quantifiable
-  | Meta MetaCharacter
-  deriving (Eq, Show)
+charList :: [RegexCharacter] -> Gen String
+charList = fmap concat . sequence . fmap matchingChar
 
-data Quantifiable
-  = AnyCharacter
-  | Character Char
-  | CharacterClass [CharacterClassCharacter]
-  | GeneralEscapeCharacter
-  | Subpattern Regex
-  deriving (Eq, Show)
+matchingChar :: RegexCharacter -> Gen String
+matchingChar (Quant q) = matchingQuantifiable q
+matchingChar (Meta m) = matchingMeta m
 
-data MetaCharacter
-  = StartOfString
-  | EndOfString
-  | ZeroOrMore Quantifiable
-  | OneOrMore Quantifiable
-  deriving (Eq, Show)
+matchingQuantifiable :: Quantifiable -> Gen String
+matchingQuantifiable AnyCharacter = fmap (: "") regexChars
+matchingQuantifiable (Character char) = elements [[char]]
+matchingQuantifiable (CharacterClass chars)
+  = oneof $ matchingCharacterClassCharacters <$> chars
+matchingQuantifiable (NegatedCharacterClass chars)
+  = (: []) <$> regexChars
+  `suchThat` (\ a -> all (not . inCharacterClassCharacter a) chars)
+matchingQuantifiable (Subpattern re) = matching re
 
-data CharacterClassCharacter
-  = CharacterClassEscape
-  | ClassLiteral Char
-  deriving (Eq, Show)
+matchingMeta :: MetaCharacter -> Gen String
+matchingMeta (ZeroOrMore q) = fmap concat . listOf $ matchingQuantifiable q
+matchingMeta (OneOrMore q) = fmap concat . listOf1 $ matchingQuantifiable q
+matchingMeta (MinMax q r) = do
+  let (a, b) = extractPositiveRange r
+  k <- choose (a, b)
+  fmap concat . vectorOf k $ matchingQuantifiable q
 
-instance ToJSON Regex where
-  toJSON = undefined
-
-matching :: Regex -> Gen Regex
-matching = error "matching undefined"
-
-toText :: Regex -> Text
-toText = error "toText undefined"
-
-parseRegex :: String -> Either ParseError Regex
-parseRegex t = parse (regex <* eof) "(unknown)" t
-
-regex :: GenParser Char st Regex
-regex = (Regex <$> many1 regexCharacter) `chainl1` (Alternative <$ string "|")
-
-regexCharacter
-  = try (Meta <$> metacharacter)
-    <|> try (Quant <$> quantifiable)
-    <?> "regexCharacter"
-
-character :: GenParser Char st Quantifiable
-character = Character <$> noneOf "\\^$.[|()?*+{"
-  <?> "character"
-
-metacharacter
-  = try (StartOfString <$ string "^")
-    <|> try (EndOfString <$ string "$")
-    <|> try (ZeroOrMore <$> quantifiable <* string "*")
-    <|> try (OneOrMore <$> quantifiable <* string "+")
-    <?> "MetaCharacter"
-
-quantifiable
-  = try subpattern
-    <|> try characterClass
-    <|> try (GeneralEscapeCharacter <$ string "\\")
-    <|> try character
-    <|> try (AnyCharacter <$ string ".")
-    <?> "Quantifiable"
-
-subpattern
-  = Subpattern <$> (string "(" *> regex <* string ")")
-
-characterClass
-  = CharacterClass <$> (string "[" *> many1 characterClassCharacters <* string "]")
-
-characterClassCharacters
-  = ClassLiteral <$> noneOf "\\^[]-"
+matchingCharacterClassCharacters :: CharacterClassCharacter -> Gen String
+matchingCharacterClassCharacters (ClassLiteral c) = elements [[c]]
+matchingCharacterClassCharacters (ClassRange r)
+  = fmap (: "") . choose $ extractRange r

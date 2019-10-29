@@ -4,7 +4,7 @@ IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 
-"$DIR/script/build"
+"$DIR/script/update"
 
 set +e
 docker kill candidates
