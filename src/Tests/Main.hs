@@ -19,19 +19,27 @@ main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "Tests"
-  [ testCase "a|b" test_alternatives
-  , testCase "[ab]" test_character_class
-  , testCase "" test_empty
-  , testCase "\\*" test_escape_metachar
-  , testCase "*" test_invalid_pattern
-  , testCase "parse with PCRE lib" test_matching_produces_valid_matches
-  , testCase "." test_meta_char
-  , testCase "^a" test_multiple_char
-  , testCase "a+" test_one_or_more
-  , testCase "a" test_single_char
-  , testCase "a(b)" test_subpattern
-  , testCase "transitive example" test_transitive_a
-  , testCase "a*" test_zero_or_more
+  [ testGroup "Simple patterns"
+    [ testCase "a|b" test_alternatives
+    , testCase "[ab]" test_character_class
+    , testCase "\\*" test_escape_metachar
+    , testCase "." test_meta_char
+    , testCase "^a" test_multiple_char
+    , testCase "a+" test_one_or_more
+    , testCase "a" test_single_char
+    , testCase "a(b)" test_subpattern
+    , testCase "a*" test_zero_or_more
+    ]
+
+  , testGroup "Failure cases"
+    [ testCase "empty string" test_empty
+    , testCase "*" test_invalid_pattern
+    ]
+
+  , testGroup "Transitive properties"
+    [ testCase "parse with PCRE lib" test_matching_produces_valid_matches
+    , testCase "transitive example" test_transitive_a
+    ]
   ]
 
 test_empty :: Assertion
