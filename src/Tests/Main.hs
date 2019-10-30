@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -F -pgmF htfpp #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 import Control.Monad
@@ -9,33 +8,52 @@ import Data.String.Conv
 import System.Console.ANSI
 import System.Environment
 import System.IO (hFlush, stdout)
-import Test.Framework
 import Test.QuickCheck.Regex.PCRE
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck
 import Text.Regex.PCRE hiding (Regex)
 
 main :: IO ()
-main = htfMain htf_thisModulesTests
+main = defaultMain tests
 
-test_empty :: IO ()
-test_empty = assertBool . isLeft . parseRegex $ ""
+tests :: TestTree
+tests = testGroup "Tests"
+  [ testCase "a|b" test_alternatives
+  , testCase "[ab]" test_character_class
+  , testCase "" test_empty
+  , testCase "\\*" test_escape_metachar
+  , testCase "*" test_invalid_pattern
+  , testCase "parse with PCRE lib" test_matching_produces_valid_matches
+  , testCase "." test_meta_char
+  , testCase "^a" test_multiple_char
+  , testCase "a+" test_one_or_more
+  , testCase "a" test_single_char
+  , testCase "a(b)" test_subpattern
+  , testCase "transitive example" test_transitive_a
+  , testCase "a*" test_zero_or_more
+  ]
 
-test_single_char :: IO ()
+test_empty :: Assertion
+test_empty = assertBool "Empty pattern doesn't fail" . isLeft . parseRegex $ ""
+
+test_single_char :: Assertion
 test_single_char =
-  assertEqual (Right (Regex [Quant (Character 'a')])) (parseRegex "a")
+  assertEqual "Could not parse pattern" (Right (Regex [Quant (Character 'a')])) (parseRegex "a")
 
-test_meta_char :: IO ()
+test_meta_char :: Assertion
 test_meta_char =
-  assertEqual (Right (Regex [Quant AnyCharacter])) (parseRegex ".")
+  assertEqual "Could not parse pattern" (Right (Regex [Quant AnyCharacter])) (parseRegex ".")
 
-test_multiple_char :: IO ()
+test_multiple_char :: Assertion
 test_multiple_char =
-  assertEqual (Right (StartOfString [Quant (Character 'a')])) (parseRegex "^a")
+  assertEqual "Could not parse pattern" (Right (StartOfString [Quant (Character 'a')])) (parseRegex "^a")
 
-test_invalid_pattern :: IO ()
-test_invalid_pattern = assertBool . isLeft . parseRegex $ "*"
+test_invalid_pattern :: Assertion
+test_invalid_pattern = assertBool "Parsed an invalid pattern" . isLeft . parseRegex $ "*"
 
-test_alternatives :: IO ()
-test_alternatives = assertEqual
+test_alternatives :: Assertion
+test_alternatives = assertEqual "Could not parse pattern"
   (Right
         (Alternative
           (Regex [Quant (Character 'a')])
@@ -43,44 +61,44 @@ test_alternatives = assertEqual
         ))
   (parseRegex "a|b")
 
-test_zero_or_more :: IO ()
-test_zero_or_more = assertEqual
+test_zero_or_more :: Assertion
+test_zero_or_more = assertEqual "Could not parse pattern"
   (parseRegex "a*")
   (Right (Regex [Meta (ZeroOrMore (Character 'a'))]))
 
-test_one_or_more :: IO ()
-test_one_or_more = assertEqual
+test_one_or_more :: Assertion
+test_one_or_more = assertEqual "Could not parse pattern"
   (parseRegex "a+")
   (Right (Regex [Meta (OneOrMore (Character 'a'))]))
 
-test_subpattern :: IO ()
-test_subpattern = assertEqual
+test_subpattern :: Assertion
+test_subpattern = assertEqual "Could not parse pattern"
   (parseRegex "a(b)")
   (Right
     (Regex [ Quant (Character 'a'), Quant (Subpattern (Regex [ Quant (Character 'b')]))]))
 
-test_character_class :: IO ()
-test_character_class = assertEqual
+test_character_class :: Assertion
+test_character_class = assertEqual "Could not parse pattern"
   (parseRegex "[ab]")
   (Right
     (Regex [ Quant (CharacterClass [ ClassLiteral 'a', ClassLiteral 'b'])]))
 
-test_transitive_a :: IO ()
-test_transitive_a = assertEqual (Right str) (fmap toText . parseRegex $ str)
+test_transitive_a :: Assertion
+test_transitive_a = assertEqual "parsed and rendered version not equal" (Right str) (fmap toText . parseRegex $ str)
   where
     str = "a|a.|([a-b]+)|a{1,3}"
 
-test_escape_metachar :: IO ()
-test_escape_metachar = assertEqual
+test_escape_metachar :: Assertion
+test_escape_metachar = assertEqual "Could not parse pattern"
   (parseRegex "\\*")
   (Right (Regex [ Quant (Character '*') ]))
 
-test_matching_produces_valid_matches :: IO ()
+test_matching_produces_valid_matches :: Assertion
 test_matching_produces_valid_matches = do
   num <- read . fromMaybe "10" <$> lookupEnv "RM_TEST_VALID_REGEXES"
   regularExpressions <- replicateM num . generate $ arbitrary
   allValid <- mapM validRegex regularExpressions
-  assertEqual True (and allValid)
+  assertEqual "All valid" True (and allValid)
   where
     validRegex :: Regex -> IO Bool
     validRegex re = do

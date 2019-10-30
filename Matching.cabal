@@ -56,15 +56,13 @@ executable Matching
   ghc-options: -O2 -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
   default-language:    Haskell2010
 
-
 Test-suite test-matching
     Hs-Source-Dirs: src/Tests/
     type: exitcode-stdio-1.0
     Main-is: Main.hs
 
     ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
-    Build-depends: HTF
-                  , QuickCheck
+    Build-depends: QuickCheck
                   , Matching == 0.1.0.0
                   , aeson
                   , ansi-terminal
