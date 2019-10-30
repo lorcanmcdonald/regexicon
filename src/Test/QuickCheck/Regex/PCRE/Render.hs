@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Test.QuickCheck.Regex.PCRE.Render where
-import Data.Monoid
 import Test.QuickCheck.Regex.PCRE.Types
 
 toText :: Regex -> String
