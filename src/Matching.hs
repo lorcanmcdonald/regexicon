@@ -6,7 +6,7 @@ import Data.Aeson (ToJSON (..), object, (.=))
 import Data.String.Conv
 import Data.Text (Text)
 import Test.QuickCheck (generate)
-import Test.QuickCheck.Regex.PCRE (Regex, matching, parseRegex)
+import Test.QuickCheck.Regex.PCRE (matching, parseRegex)
 
 data RegexResults = RegexTimeout
                   | RegexParseFailure String

@@ -6,7 +6,6 @@ import Data.Monoid
 import Data.String.Conv
 import Data.Text (Text)
 import Matching
-import Test.QuickCheck.Regex.PCRE (toText)
 import Text.Blaze.Html.Renderer.Utf8
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A

@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, OverloadedStrings #-}
 module Test.QuickCheck.Regex.PCRE.Parse (parseRegex) where
+import Data.Char
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
 
@@ -23,9 +24,8 @@ character = Character <$> noneOf "\\^$.[|()?*+{"
   <?> "character"
 
 escapedCharacter :: GenParser Char st Quantifiable
-escapedCharacter = Character <$> (string "\\" *> oneOf "\\^$.[|()?*+{")
+escapedCharacter = Character <$> (string "\\" *> satisfy (not . isAlphaNum))
   <?> "escapedCharacter"
-
 
 metacharacter :: GenParser Char st MetaCharacter
 metacharacter
@@ -34,29 +34,22 @@ metacharacter
     <|> try (MinMax <$> quantifiable <*> positiveIntRange)
     <?> "MetaCharacter"
 
-positiveIntRange :: GenParser Char st (PositiveOrderedRange Int)
-positiveIntRange = try (do
+constrainedRange
+  :: (Ord a, Read a)
+  => (a -> a -> Maybe b) -> GenParser Char st b
+constrainedRange constructor = try (do
   _ <- string "{"
   a <- many1 digit
   _ <- string ","
   b <- many1 digit
   _ <- string "}"
-  case positiveOrderedRange (read a) (read b) of
+  case constructor (read a) (read b) of
     Just range -> return range
     Nothing -> fail "Could not create ordered range"
   )
 
-intRange :: GenParser Char st (OrderedRange Int)
-intRange = try (do
-  _ <- string "{"
-  a <- many1 digit
-  _ <- string ","
-  b <- many1 digit
-  _ <- string "}"
-  case orderedRange (read a) (read b) of
-    Just range -> return range
-    Nothing -> fail "Could not create ordered range"
-  )
+positiveIntRange :: GenParser Char st (PositiveOrderedRange Int)
+positiveIntRange = constrainedRange positiveOrderedRange
 
 quantifiable :: GenParser Char st Quantifiable
 quantifiable

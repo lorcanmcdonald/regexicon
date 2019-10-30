@@ -2,7 +2,6 @@
 module Main where
 import Control.Concurrent.Async
 import Control.Monad.IO.Class
-import Data.Monoid
 import Data.String.Conv
 import Data.Text (Text, stripPrefix, stripSuffix)
 import qualified Data.Text.Lazy.Encoding as T
