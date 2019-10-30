@@ -61,7 +61,9 @@ orderedRange c d
   | c <= d = pure $ OrderedRange c d
   | otherwise = Nothing
 
-positiveOrderedRange :: (Ord a, Num a) => a -> a -> Maybe (PositiveOrderedRange a)
+positiveOrderedRange
+  :: (Ord a, Num a)
+  => a -> a -> Maybe (PositiveOrderedRange a)
 positiveOrderedRange c d
   | 0 <= c && c <= d = pure $ PositiveOrderedRange (OrderedRange c d)
   | otherwise = Nothing
@@ -89,16 +91,22 @@ instance Arbitrary RegexCharacter where
 instance Arbitrary Quantifiable where
   arbitrary = sized quant'
     where
-      quant' 0 = Character <$> regexChars
-      quant' n | n < 0
+      quant' n | n < 0 -- a guard to hide compiler warnings
         = Character <$> regexChars
-      quant' n | n > 0
+      quant' n | n > 3
         = oneof
         [ pure AnyCharacter
         , Character <$> regexChars
         , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
         , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
-        -- , fmap Subpattern arbitrary -- TODO This can trigger infinite loop
+        ]
+      quant' n | n >= 0 && n <= 3 -- Subpattern can trigger infinite loop at larger sizes
+        = oneof
+        [ pure AnyCharacter
+        , Character <$> regexChars
+        , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
+        , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
+        , fmap Subpattern arbitrary
         ]
 
 instance Arbitrary MetaCharacter where
