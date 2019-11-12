@@ -1,5 +1,4 @@
-const UglifyJsPlugin = require("uglifyjs-webpack-plugin"),
-  clc = require("cli-color"),
+const clc = require("cli-color"),
   path = require("path"),
   webpack = require("webpack");
 
@@ -9,8 +8,8 @@ const config = {
   },
   resolve: {
     alias: {
-      react: "preact-compat",
-      "react-dom": "preact-compat"
+      react: "preact/compat",
+      "react-dom": "preact/compat"
     },
     extensions: [".js", ".jsx"],
     modules: [__dirname, path.resolve(__dirname, "node_modules")]
@@ -22,7 +21,6 @@ const config = {
   devtool: "hidden-source-map",
   module: {
     rules: [
-      { test: /\.js$/, exclude: /node_modules/, loader: "babel-loader" },
       { test: /\.jsx$/, exclude: /node_modules/, loader: "babel-loader" },
       { test: /\.less$/, use: ["style-loader", "css-loader", "less-loader"] },
       { test: /\.scss$/, use: ["style-loader", "css-loader", "sass-loader"] }
@@ -36,10 +34,7 @@ const config = {
     new webpack.DefinePlugin({
       "globalConfig.env": '"production"'
     })
-  ],
-  optimization: {
-    minimizer: [new UglifyJsPlugin()]
-  }
+  ]
 };
 
 module.exports = config;
