@@ -18,6 +18,17 @@ instance RegexRenderer RegexCharacter where
 
 instance RegexRenderer Quantifiable where
   render AnyCharacter = "."
+  render (Backslash (Nonalphanumeric c)) = "\\" <> (c : "")
+  render (Backslash Digit) = "\\d"
+  render (Backslash NonDigit) = "\\D"
+  render (Backslash HorizontalWhiteSpace) = "\\h"
+  render (Backslash NotHorizontalWhiteSpace) = "\\H"
+  render (Backslash WhiteSpace) = "\\s"
+  render (Backslash NotWhiteSpace) = "\\S"
+  render (Backslash VerticalWhiteSpace) = "\\h"
+  render (Backslash NotVerticalWhiteSpace) = "\\H"
+  render (Backslash WordCharacter) = "\\w"
+  render (Backslash NonWordCharacter) = "\\W"
   render (Character c) = [c]
   render (CharacterClass chars) = "[" <> concatMap render chars <> "]"
   render (NegatedCharacterClass chars) = "[^" <> concatMap render chars <> "]"

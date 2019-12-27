@@ -1,6 +1,7 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Test.QuickCheck.Regex.PCRE.Parse (parseRegex) where
 import Data.Char
+import Data.Default
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
 
@@ -9,7 +10,7 @@ parseRegex = parse (regex <* eof) "(unknown)"
 
 regex :: GenParser Char st Regex
 regex = try (StartOfString <$> (string "^" *> many1 regexCharacter))
-    -- <|> try ((EndOfString <$> regex) <* string "$")
+    <|> try (EndOfString <$> (many1 regexCharacter <* string "$"))
     <|> try (StartAndEndOfString <$> (string "^" *> (many regexCharacter <* string "$")))
     <|> ((Regex <$> many1 regexCharacter) `chainl1` (Alternative <$ string "|"))
 
@@ -35,17 +36,26 @@ metacharacter
     <?> "MetaCharacter"
 
 constrainedRange
-  :: (Ord a, Read a)
+  :: (Ord a, Read a, Default a)
   => (a -> a -> Maybe b) -> GenParser Char st b
-constrainedRange constructor = try (do
-  _ <- string "{"
-  a <- many1 digit
-  _ <- string ","
-  b <- many1 digit
-  _ <- string "}"
-  case constructor (read a) (read b) of
-    Just range -> return range
-    Nothing -> fail "Could not create ordered range"
+constrainedRange constructor
+  = try (do
+    _ <- string "{"
+    a <- many1 digit
+    _ <- string "}"
+    case constructor def (read a) of
+      Just range -> return range
+      Nothing -> fail "Could not create ordered range"
+  )
+  <|> try (do
+    _ <- string "{"
+    a <- many1 digit
+    _ <- string ","
+    b <- many1 digit
+    _ <- string "}"
+    case constructor (read a) (read b) of
+      Just range -> return range
+      Nothing -> fail "Could not create ordered range"
   )
 
 positiveIntRange :: GenParser Char st (PositiveOrderedRange Int)
@@ -54,6 +64,8 @@ positiveIntRange = constrainedRange positiveOrderedRange
 quantifiable :: GenParser Char st Quantifiable
 quantifiable
   = try subpattern
+    <|> try backslashSequence
+    <|> try negatedCharacterClass
     <|> try characterClass
     <|> try character
     <|> try escapedCharacter
@@ -65,10 +77,19 @@ subpattern
   = Subpattern <$> (string "(" *> regex <* string ")")
     <?> "Subpattern"
 
+backslashSequence :: GenParser Char st Quantifiable
+backslashSequence
+  = Backslash <$> (string "\\d" *> pure Digit)
+
 characterClass :: GenParser Char st Quantifiable
 characterClass
   = CharacterClass <$> (string "[" *> many1 characterClassCharacters <* string "]")
     <?> "CharacterClass"
+
+negatedCharacterClass :: GenParser Char st Quantifiable
+negatedCharacterClass
+  = NegatedCharacterClass <$> (string "[^" *> many1 characterClassCharacters <* string "]")
+    <?> "NegatedCharacterClass"
 
 characterClassCharacters :: GenParser Char st CharacterClassCharacter
 characterClassCharacters

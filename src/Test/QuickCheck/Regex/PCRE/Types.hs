@@ -7,6 +7,7 @@ module Test.QuickCheck.Regex.PCRE.Types
   , Quantifiable (..)
   , Regex (..)
   , RegexCharacter (..)
+  , BackslashSequence (..)
   , extractPositiveRange
   , extractRange
   , inCharacterClassCharacter
@@ -16,6 +17,7 @@ module Test.QuickCheck.Regex.PCRE.Types
   ) where
 import Control.Monad
 import Data.Aeson (ToJSON (..))
+import Data.Char
 import Test.QuickCheck
 
 data Regex
@@ -34,6 +36,7 @@ data RegexCharacter
 data Quantifiable
   = AnyCharacter
   | Character Char
+  | Backslash BackslashSequence
   | CharacterClass [CharacterClassCharacter]
   | NegatedCharacterClass [CharacterClassCharacter]
   | Subpattern Regex
@@ -48,6 +51,20 @@ data MetaCharacter
 data CharacterClassCharacter
   = ClassLiteral Char
   | ClassRange (OrderedRange Char)
+  deriving (Eq, Show)
+
+data BackslashSequence
+  = Nonalphanumeric Char
+  | Digit
+  | NonDigit
+  | HorizontalWhiteSpace
+  | NotHorizontalWhiteSpace
+  | WhiteSpace
+  | NotWhiteSpace
+  | VerticalWhiteSpace
+  | NotVerticalWhiteSpace
+  | WordCharacter
+  | NonWordCharacter
   deriving (Eq, Show)
 
 data OrderedRange a = OrderedRange a a
@@ -104,10 +121,12 @@ instance Arbitrary Quantifiable where
         = oneof
         [ pure AnyCharacter
         , Character <$> regexChars
+        , Backslash <$> arbitrary
         , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
         , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
         , fmap Subpattern arbitrary
         ]
+      quant' _ = pure AnyCharacter
 
 instance Arbitrary MetaCharacter where
   arbitrary
@@ -123,6 +142,30 @@ instance Arbitrary CharacterClassCharacter where
     [ ClassLiteral <$> regexChars
     -- , ClassRange <$> arbitrary
     ]
+
+instance Arbitrary BackslashSequence where
+  arbitrary
+    = oneof
+    [ Nonalphanumeric <$> nonalphanumeric
+    , pure Digit
+    , pure NonDigit
+    , pure HorizontalWhiteSpace
+    , pure NotHorizontalWhiteSpace
+    , pure WhiteSpace
+    , pure NotWhiteSpace
+    , pure VerticalWhiteSpace
+    , pure NotVerticalWhiteSpace
+    , pure WordCharacter
+    , pure NonWordCharacter
+    ]
+
+nonalphanumeric :: Gen Char
+nonalphanumeric = arbitrary `suchThat`
+  (\ x
+    -> isDigit x
+    || isAsciiUpper x
+    || isAsciiLower x
+  )
 
 instance (Arbitrary a, Ord a) => Arbitrary (OrderedRange a) where
   arbitrary

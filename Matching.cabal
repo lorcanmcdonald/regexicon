@@ -30,6 +30,7 @@ library
                      , blaze-html
                      , blaze-markup
                      , bytestring
+                     , data-default
                      , parsec
                      , regex-tdfa
                      , scotty
@@ -69,6 +70,7 @@ Test-suite test-matching
                   , attoparsec
                   , base
                   , extra
+                  , parsec
                   , regex-pcre
                   , string-conv
                   , tasty >= 0.10.1
