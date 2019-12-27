@@ -2,7 +2,6 @@
 module Matching.Server.Views where
 import Control.Concurrent
 import Data.ByteString.Lazy (ByteString)
-import Data.Monoid
 import Data.String.Conv
 import Data.Text (Text)
 import Matching
