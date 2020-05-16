@@ -12,7 +12,16 @@ regex :: GenParser Char st Regex
 regex = try (StartOfString <$> (string "^" *> many1 regexCharacter))
     <|> try (EndOfString <$> (many1 regexCharacter <* string "$"))
     <|> try (StartAndEndOfString <$> (string "^" *> (many regexCharacter <* string "$")))
-    <|> ((Regex <$> many1 regexCharacter) `chainl1` (Alternative <$ string "|"))
+    <|> try (Alternative
+        <$> (many1 regexCharacter <* string "|")
+        <*> (many1 regexCharacter <* string "|")
+        <*> (many1 regexCharacter `sepBy` string "|"))
+    <|> try (Alternative
+        <$> (many1 regexCharacter <* string "|")
+        <*> (many1 regexCharacter)
+        <*> (return []))
+    <|> try (Regex <$> many1 regexCharacter)
+    <?> "regex"
 
 regexCharacter :: GenParser Char st RegexCharacter
 regexCharacter
@@ -67,14 +76,14 @@ quantifiable
     <|> try backslashSequence
     <|> try negatedCharacterClass
     <|> try characterClass
-    <|> try character
     <|> try escapedCharacter
+    <|> try character
     <|> try (AnyCharacter <$ string ".")
     <?> "Quantifiable"
 
 subpattern :: GenParser Char st Quantifiable
 subpattern
-  = Subpattern <$> (string "(" *> regex <* string ")")
+  = Subpattern <$> (string "(" *> many1 regexCharacter <* string ")")
     <?> "Subpattern"
 
 backslashSequence :: GenParser Char st Quantifiable

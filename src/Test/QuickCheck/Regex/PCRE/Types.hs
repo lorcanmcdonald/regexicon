@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric, GeneralizedNewtypeDeriving, OverloadedStrings #-}
 module Test.QuickCheck.Regex.PCRE.Types
   ( CharacterClassCharacter (..)
   , MetaCharacter (..)
@@ -18,20 +18,21 @@ module Test.QuickCheck.Regex.PCRE.Types
 import Control.Monad
 import Data.Aeson (ToJSON (..))
 import Data.Char
+import GHC.Generics
 import Test.QuickCheck
 
 data Regex
   = Regex [RegexCharacter]
-  | Alternative Regex Regex
+  | Alternative [RegexCharacter] [RegexCharacter] [[RegexCharacter]]
   | StartOfString [RegexCharacter]
   | EndOfString [RegexCharacter]
   | StartAndEndOfString [RegexCharacter]
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 data RegexCharacter
   = Quant Quantifiable
   | Meta MetaCharacter
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 data Quantifiable
   = AnyCharacter
@@ -39,19 +40,19 @@ data Quantifiable
   | Backslash BackslashSequence
   | CharacterClass [CharacterClassCharacter]
   | NegatedCharacterClass [CharacterClassCharacter]
-  | Subpattern Regex
-  deriving (Eq, Show)
+  | Subpattern [RegexCharacter]
+  deriving (Eq, Generic, Show)
 
 data MetaCharacter
   = ZeroOrMore Quantifiable
   | OneOrMore Quantifiable
   | MinMax Quantifiable (PositiveOrderedRange Int)
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 data CharacterClassCharacter
   = ClassLiteral Char
   | ClassRange (OrderedRange Char)
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 data BackslashSequence
   = Nonalphanumeric Char
@@ -65,13 +66,13 @@ data BackslashSequence
   | NotVerticalWhiteSpace
   | WordCharacter
   | NonWordCharacter
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 data OrderedRange a = OrderedRange a a
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 newtype PositiveOrderedRange a = PositiveOrderedRange (OrderedRange a)
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 orderedRange :: (Ord a) => a -> a -> Maybe (OrderedRange a)
 orderedRange c d
@@ -92,11 +93,12 @@ instance Arbitrary Regex where
   arbitrary
     = oneof
     [ Regex <$> ((:) <$> arbitrary <*> arbitrary)
-    , liftM2 Alternative arbitrary arbitrary
+    , Alternative <$> arbitrary <*> arbitrary <*> arbitrary
     , StartOfString <$> ((:) <$> arbitrary <*> arbitrary)
     , EndOfString <$> ((:) <$> arbitrary <*> arbitrary)
     , StartAndEndOfString <$> ((:) <$> arbitrary <*> arbitrary)
     ]
+  shrink = genericShrink
 
 instance Arbitrary RegexCharacter where
   arbitrary
@@ -104,29 +106,30 @@ instance Arbitrary RegexCharacter where
     [ Quant <$> arbitrary
     , Meta <$> arbitrary
     ]
+  shrink = genericShrink
 
 instance Arbitrary Quantifiable where
   arbitrary = sized quant'
     where
-      quant' n | n < 0 -- a guard to hide compiler warnings
-        = Character <$> regexChars
       quant' n | n > 3
-        = oneof
-        [ pure AnyCharacter
-        , Character <$> regexChars
-        , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
-        , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
-        ]
-      quant' n | n >= 0 && n <= 3 -- Subpattern can trigger infinite loop at larger sizes
         = oneof
         [ pure AnyCharacter
         , Character <$> regexChars
         , Backslash <$> arbitrary
         , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
         , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
+        ]
+      quant' n | n >= 0 && n <= 3 -- Subpattern can cause very deep trees at larger sizes
+        = oneof
+        [ pure AnyCharacter
+        , Character <$> regexChars
+        -- , Backslash <$> arbitrary
+        , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
+        , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
         , fmap Subpattern arbitrary
         ]
       quant' _ = pure AnyCharacter
+  shrink = genericShrink
 
 instance Arbitrary MetaCharacter where
   arbitrary
@@ -135,6 +138,7 @@ instance Arbitrary MetaCharacter where
     , OneOrMore <$> arbitrary
     , MinMax <$> arbitrary <*> arbitrary
     ]
+  shrink = genericShrink
 
 instance Arbitrary CharacterClassCharacter where
   arbitrary
@@ -142,27 +146,29 @@ instance Arbitrary CharacterClassCharacter where
     [ ClassLiteral <$> regexChars
     -- , ClassRange <$> arbitrary
     ]
+  shrink = genericShrink
 
 instance Arbitrary BackslashSequence where
   arbitrary
     = oneof
     [ Nonalphanumeric <$> nonalphanumeric
     , pure Digit
-    , pure NonDigit
-    , pure HorizontalWhiteSpace
-    , pure NotHorizontalWhiteSpace
-    , pure WhiteSpace
-    , pure NotWhiteSpace
-    , pure VerticalWhiteSpace
-    , pure NotVerticalWhiteSpace
-    , pure WordCharacter
-    , pure NonWordCharacter
+    -- , pure NonDigit
+    -- , pure HorizontalWhiteSpace
+    -- , pure NotHorizontalWhiteSpace
+    -- , pure WhiteSpace
+    -- , pure NotWhiteSpace
+    -- , pure VerticalWhiteSpace
+    -- , pure NotVerticalWhiteSpace
+    -- , pure WordCharacter
+    -- , pure NonWordCharacter
     ]
 
+  shrink = genericShrink
 nonalphanumeric :: Gen Char
-nonalphanumeric = arbitrary `suchThat`
+nonalphanumeric = arbitraryASCIIChar `suchThat`
   (\ x
-    -> isDigit x
+    -> not $ isDigit x
     || isAsciiUpper x
     || isAsciiLower x
   )
@@ -177,6 +183,8 @@ instance (Arbitrary a, Ord a) => Arbitrary (OrderedRange a) where
     else
       return (OrderedRange b a)
 
+  shrink = genericShrink
+
 instance (Arbitrary a, Num a, Ord a) => Arbitrary (PositiveOrderedRange a) where
   arbitrary
     = do
@@ -189,6 +197,7 @@ instance (Arbitrary a, Num a, Ord a) => Arbitrary (PositiveOrderedRange a) where
       Just r -> return r
       Nothing ->
         error "Tried to generate an invalid Arbitrary PositiveOrderedRange a"
+  shrink = genericShrink
 
 regexChars :: Gen Char
 regexChars = oneof [choose ('a', 'z'), choose ('A', 'Z'), choose ('0', '9')] -- TODO Extend to non-metacharacter chars

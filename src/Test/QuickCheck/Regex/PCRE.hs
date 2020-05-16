@@ -22,7 +22,7 @@ import Test.QuickCheck.Regex.PCRE.Types
 
 matching :: Regex -> Gen String
 matching (Regex reChar) = charList reChar
-matching (Alternative re1 re2) = oneof [matching re1, matching re2]
+matching (Alternative first second rest) = oneof . map charList $ (first : second : rest)
 matching (StartOfString reChar) = charList reChar
 matching (EndOfString reChar) = charList reChar
 matching (StartAndEndOfString reChar) = charList reChar
@@ -43,7 +43,7 @@ matchingQuantifiable (CharacterClass chars)
 matchingQuantifiable (NegatedCharacterClass chars)
   = (: []) <$> regexChars
   `suchThat` (\ a -> all (not . inCharacterClassCharacter a) chars)
-matchingQuantifiable (Subpattern re) = matching re
+matchingQuantifiable (Subpattern re) = charList re
 
 matchingMeta :: MetaCharacter -> Gen String
 matchingMeta (ZeroOrMore q) = fmap concat . listOf $ matchingQuantifiable q
@@ -69,23 +69,23 @@ matchingBackslash Digit
   , pure "9"
   ]
 matchingBackslash NonDigit
-  = fmap (: "") ((arbitrary :: Gen Char) `suchThat` (not . isDigit))
+  = fmap (: "") (arbitraryASCIIChar `suchThat` (not . isDigit))
 matchingBackslash HorizontalWhiteSpace
   = (: "") <$> oneof (map return horizontalSpace)
 matchingBackslash NotHorizontalWhiteSpace
-  = fmap (: "") (arbitrary :: Gen Char) `suchThat` (`notElem` map return horizontalSpace)
+  = fmap (: "") arbitraryASCIIChar `suchThat` (`notElem` map return horizontalSpace)
 matchingBackslash VerticalWhiteSpace
   = (: "") <$> oneof (map return verticalSpace)
 matchingBackslash NotVerticalWhiteSpace
-  = fmap (: "") (arbitrary :: Gen Char) `suchThat` (`notElem` map return verticalSpace)
+  = fmap (: "") arbitraryASCIIChar `suchThat` (`notElem` map return verticalSpace)
 matchingBackslash WhiteSpace
   = (: "") <$> oneof (map return whiteSpace)
 matchingBackslash NotWhiteSpace
-  = fmap (: "") (arbitrary :: Gen Char) `suchThat` (`notElem` map return whiteSpace)
+  = fmap (: "") arbitraryASCIIChar `suchThat` (`notElem` map return whiteSpace)
 matchingBackslash WordCharacter
   = (: "") <$> oneof (map return wordChar)
 matchingBackslash NonWordCharacter
-  = fmap (: "") (arbitrary :: Gen Char) `suchThat` (`notElem` map return wordChar)
+  = fmap (: "") arbitraryASCIIChar `suchThat` (`notElem` map return wordChar)
 
 horizontalSpace :: String
 horizontalSpace =

@@ -6,7 +6,6 @@ import Data.List (intercalate)
 import Data.Maybe
 import Data.String.Conv
 import System.Console.ANSI
-import System.Environment
 import System.IO (hFlush, stdout)
 import Test.QuickCheck.Regex.PCRE
 import Test.Tasty
@@ -42,8 +41,9 @@ tests = testGroup "Tests"
       ]
 
     , testGroup "Transitive properties"
-      [ testCase "parse with PCRE lib" test_matching_produces_valid_matches
-      , testCase "transitive example" test_transitive_a
+      [ testProperty "parse with PCRE lib" prop_matching_produces_valid_matches
+      , testCase "transitive example: a|a. " test_transitive_a
+      , testCase "transitive example: a|a.|([a-b]+)|a{1,3}" test_transitive_b
       ]
     ]
   , testGroup "Matching"
@@ -56,63 +56,63 @@ test_empty = assertBool "Empty pattern doesn't fail" . isLeft . parseRegex $ ""
 
 test_single_char :: Assertion
 test_single_char =
-  assertEqual "Could not parse pattern" (Right (Regex [Quant (Character 'a')])) (parseRegex "a")
+  assertEqual "Incorrectly parsed pattern" (Right (Regex [Quant (Character 'a')])) (parseRegex "a")
 
 test_meta_char :: Assertion
 test_meta_char =
-  assertEqual "Could not parse pattern" (Right (Regex [Quant AnyCharacter])) (parseRegex ".")
+  assertEqual "Incorrectly parsed pattern" (Right (Regex [Quant AnyCharacter])) (parseRegex ".")
 
 test_multiple_char :: Assertion
 test_multiple_char =
-  assertEqual "Could not parse pattern" (Right (StartOfString [Quant (Character 'a')])) (parseRegex "^a")
+  assertEqual "Incorrectly parsed pattern" (Right (StartOfString [Quant (Character 'a')])) (parseRegex "^a")
 
 test_match_end :: Assertion
 test_match_end =
-  assertEqual "Could not parse pattern"
+  assertEqual "Incorrectly parsed pattern"
     (Right (EndOfString [Quant (Character 'a')])) (parseRegex "a$")
 
 test_invalid_pattern :: Assertion
 test_invalid_pattern = assertBool "Parsed an invalid pattern" . isLeft . parseRegex $ "*"
 
 test_alternatives :: Assertion
-test_alternatives = assertEqual "Could not parse pattern"
+test_alternatives = assertEqual "Incorrectly parsed pattern"
+  (parseRegex "a|b")
   (Right
         (Alternative
-          (Regex [Quant (Character 'a')])
-          (Regex [Quant (Character 'b')])
-        ))
-  (parseRegex "a|b")
+          [Quant (Character 'a')]
+          [Quant (Character 'b')]
+          []))
 
 test_zero_or_more :: Assertion
-test_zero_or_more = assertEqual "Could not parse pattern"
+test_zero_or_more = assertEqual "Incorrectly parsed pattern"
   (parseRegex "a*")
   (Right (Regex [Meta (ZeroOrMore (Character 'a'))]))
 
 test_one_or_more :: Assertion
-test_one_or_more = assertEqual "Could not parse pattern"
+test_one_or_more = assertEqual "Incorrectly parsed pattern"
   (parseRegex "a+")
   (Right (Regex [Meta (OneOrMore (Character 'a'))]))
 
 test_subpattern :: Assertion
-test_subpattern = assertEqual "Could not parse pattern"
+test_subpattern = assertEqual "Incorrectly parsed pattern"
   (parseRegex "a(b)")
   (Right
-    (Regex [ Quant (Character 'a'), Quant (Subpattern (Regex [ Quant (Character 'b')]))]))
+    (Regex [ Quant (Character 'a'), Quant (Subpattern [ Quant (Character 'b')])]))
 
 test_character_class :: Assertion
-test_character_class = assertEqual "Could not parse pattern"
+test_character_class = assertEqual "Incorrectly parsed pattern"
   (parseRegex "[ab]")
   (Right
     (Regex [ Quant (CharacterClass [ ClassLiteral 'a', ClassLiteral 'b'])]))
 
 test_negated_character_class :: Assertion
-test_negated_character_class = assertEqual "Could not parse pattern"
+test_negated_character_class = assertEqual "Incorrectly parsed pattern"
   (parseRegex "[^a]")
   (Right
     (Regex [ Quant (NegatedCharacterClass [ ClassLiteral 'a' ])]))
 
 test_website_example :: Assertion
-test_website_example = assertEqual "Could not parse pattern"
+test_website_example = assertEqual "Incorrectly parsed pattern"
   (parseRegex "[0-9a-f]{32}")
   (Right
     (Regex [ Meta (MinMax (CharacterClass [
@@ -120,17 +120,29 @@ test_website_example = assertEqual "Could not parse pattern"
       ]) (fromJust . positiveOrderedRange 0 $ 32))]))
 
 test_digit :: Assertion
-test_digit = assertEqual "Could not parse pattern"
+test_digit = assertEqual "Incorrectly parsed pattern"
   (parseRegex "\\d")
   (Right (Regex [ Quant (Backslash Digit) ]))
 
 test_transitive_a :: Assertion
-test_transitive_a = assertEqual "parsed and rendered version not equal" (Right str) (fmap toText . parseRegex $ str)
+test_transitive_a =
+  assertEqual "parsed and rendered version not equal"
+    (Right str)
+    (fmap toText . parseRegex $ str)
+  where
+    str = "a|a."
+
+
+test_transitive_b :: Assertion
+test_transitive_b =
+  assertEqual "parsed and rendered version not equal"
+    (Right str)
+    (fmap toText . parseRegex $ str)
   where
     str = "a|a.|([a-b]+)|a{1,3}"
 
 test_escape_metachar :: Assertion
-test_escape_metachar = assertEqual "Could not parse pattern"
+test_escape_metachar = assertEqual "Incorrectly parsed pattern"
   (parseRegex "\\*")
   (Right (Regex [ Quant (Character '*') ]))
 
@@ -145,23 +157,20 @@ test_matching_digit = do
     aRegex :: Regex
     aRegex = Regex [ Quant (Backslash Digit) ]
 
-test_matching_produces_valid_matches :: Assertion
-test_matching_produces_valid_matches = do
-  num <- read . fromMaybe "10" <$> lookupEnv "RM_TEST_VALID_REGEXES"
-  regularExpressions <- replicateM num . generate $ arbitrary
-  allValid <- mapM validRegex regularExpressions
-  assertEqual "All valid" True (and allValid)
+prop_matching_produces_valid_matches :: Regex -> Property
+prop_matching_produces_valid_matches regex = do
+  ioProperty $ validRegex regex
   where
     validRegex :: Regex -> IO Bool
     validRegex re = do
       ex <- examples re
-      let result = pcreMatch re `all` ex
+      let result = filter (pcreMatch re) ex
       -- debugPrint re ex
-      if not result then do
-        debugPrint re ex
-        return result
+      if length result > 0 then do
+        debugPrint re result
+        return False
       else
-        return result
+        return True
     pcreMatch :: Regex -> String -> Bool
     pcreMatch re = (=~ reAsString re)
     examples :: Regex -> IO [String]
@@ -177,6 +186,6 @@ test_matching_produces_valid_matches = do
       setSGR [SetColor Foreground Dull Blue]
       putStr " =~ "
       setSGR [Reset]
-      putStrLn $ intercalate "," ex
+      putStrLn $ intercalate "\n" ex
       putStrLn ""
       hFlush stdout
