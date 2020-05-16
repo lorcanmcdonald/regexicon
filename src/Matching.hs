@@ -10,7 +10,7 @@ import Test.QuickCheck.Regex.PCRE (matching, parseRegex)
 
 data RegexResults = RegexTimeout
                   | RegexParseFailure String
-                  | RegexResults [String]
+                  | RegexResults [Text]
 
 instance ToJSON RegexResults where
   toJSON RegexTimeout = object
@@ -32,7 +32,7 @@ matches n reText =
     Right re -> do
       candidates <- (replicateM n . generate . matching $ re) `catch` failureResult
       print . toJSON $ candidates
-      return . RegexResults $ candidates
+      return . RegexResults $ fmap toS candidates
 
   where
     failureResult :: SomeException -> IO [a]

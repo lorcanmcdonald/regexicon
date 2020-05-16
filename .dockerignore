@@ -1,4 +1,6 @@
 **/.cabal
+**/.cabal
+**/.cabal-sandbox
 **/.cabal-sandbox
 **/Test/QuickCheck/Regex
 **/cache
@@ -8,10 +10,13 @@
 ./js/node_modules
 ./js/obj
 ./obj/.cabal
+./obj/cabal-sandbox
 ./obj/cabal-store
 ./obj/cache
 ./obj/dist-newstyle/cache
 ./obj/dist-newstyle/tmp
+./obj/home
 ./obj/packagedb
 ./obj/tmp
+./script
 .git

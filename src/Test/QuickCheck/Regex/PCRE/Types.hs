@@ -15,7 +15,6 @@ module Test.QuickCheck.Regex.PCRE.Types
   , positiveOrderedRange
   , regexChars
   ) where
-import Control.Monad
 import Data.Aeson (ToJSON (..))
 import Data.Char
 import GHC.Generics
@@ -214,3 +213,4 @@ inCharacterClassCharacter c (ClassRange r)
   = c >= a && c <= b
   where
     (a, b) = extractRange r
+

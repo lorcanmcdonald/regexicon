@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 import Control.Monad
+import Control.Time
 import Data.Either.Extra (isLeft)
 import Data.List (intercalate)
 import Data.Maybe
@@ -24,6 +25,7 @@ tests = testGroup "Tests"
       , testCase "[ab]" test_character_class
       , testCase "[^a]" test_negated_character_class
       , testCase "\\*" test_escape_metachar
+      , testCase "\\=" test_escape_normal_character
       , testCase "." test_meta_char
       , testCase "^a" test_multiple_char
       , testCase "a$" test_match_end
@@ -34,12 +36,10 @@ tests = testGroup "Tests"
       , testCase "[0-9a-f]{32}" test_website_example
       , testCase "\\d" test_digit
       ]
-
     , testGroup "Failure cases"
       [ testCase "empty string" test_empty
       , testCase "*" test_invalid_pattern
       ]
-
     , testGroup "Transitive properties"
       [ testProperty "parse with PCRE lib" prop_matching_produces_valid_matches
       , testCase "transitive example: a|a. " test_transitive_a
@@ -85,13 +85,15 @@ test_alternatives = assertEqual "Incorrectly parsed pattern"
 
 test_zero_or_more :: Assertion
 test_zero_or_more = assertEqual "Incorrectly parsed pattern"
+  (Right
+    (Regex [Meta (ZeroOrMore (Character 'a'))]))
   (parseRegex "a*")
-  (Right (Regex [Meta (ZeroOrMore (Character 'a'))]))
 
 test_one_or_more :: Assertion
 test_one_or_more = assertEqual "Incorrectly parsed pattern"
   (parseRegex "a+")
-  (Right (Regex [Meta (OneOrMore (Character 'a'))]))
+  (Right
+    (Regex [Meta (OneOrMore (Character 'a'))]))
 
 test_subpattern :: Assertion
 test_subpattern = assertEqual "Incorrectly parsed pattern"
@@ -132,7 +134,6 @@ test_transitive_a =
   where
     str = "a|a."
 
-
 test_transitive_b :: Assertion
 test_transitive_b =
   assertEqual "parsed and rendered version not equal"
@@ -145,6 +146,11 @@ test_escape_metachar :: Assertion
 test_escape_metachar = assertEqual "Incorrectly parsed pattern"
   (parseRegex "\\*")
   (Right (Regex [ Quant (Character '*') ]))
+
+test_escape_normal_character :: Assertion
+test_escape_normal_character = assertEqual "Incorrectly parsed pattern"
+  (parseRegex "\\=")
+  (Right (Regex [ Quant (Character '=') ]))
 
 test_matching_digit :: Assertion
 test_matching_digit = do
@@ -164,7 +170,7 @@ prop_matching_produces_valid_matches regex = do
     validRegex :: Regex -> IO Bool
     validRegex re = do
       ex <- examples re
-      let result = filter (pcreMatch re) ex
+      let result = filter (not . pcreMatch re) ex
       -- debugPrint re ex
       if length result > 0 then do
         debugPrint re result
@@ -179,6 +185,7 @@ prop_matching_produces_valid_matches regex = do
     reAsString = toS . toText
 
     debugPrint re ex = do
+      delay (1 :: Integer)
       setSGR [SetColor Foreground Vivid Red]
       putStr " > "
       setSGR [Reset]
@@ -186,6 +193,6 @@ prop_matching_produces_valid_matches regex = do
       setSGR [SetColor Foreground Dull Blue]
       putStr " =~ "
       setSGR [Reset]
-      putStrLn $ intercalate "\n" ex
+      putStrLn $ intercalate "\n • " ex
       putStrLn ""
       hFlush stdout

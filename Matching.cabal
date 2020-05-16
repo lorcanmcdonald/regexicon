@@ -69,6 +69,7 @@ Test-suite test-matching
                   , ansi-terminal
                   , attoparsec
                   , base
+                  , delay
                   , extra
                   , parsec
                   , regex-pcre

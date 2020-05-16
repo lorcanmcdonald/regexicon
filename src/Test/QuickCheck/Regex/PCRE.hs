@@ -19,6 +19,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Regex.PCRE.Parse
 import Test.QuickCheck.Regex.PCRE.Render
 import Test.QuickCheck.Regex.PCRE.Types
+import Test.QuickCheck (Gen)
 
 matching :: Regex -> Gen String
 matching (Regex reChar) = charList reChar
