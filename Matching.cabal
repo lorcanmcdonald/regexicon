@@ -58,26 +58,40 @@ executable Matching
   default-language:    Haskell2010
 
 Test-suite test-matching
-    Hs-Source-Dirs: src/Tests/
-    type: exitcode-stdio-1.0
-    Main-is: Main.hs
+  Hs-Source-Dirs: 
+    src/Tests/
+    src
+  type: exitcode-stdio-1.0
+  Main-is: Main.hs
+  other-modules:       
+      Test.QuickCheck.Regex.PCRE
+      Test.QuickCheck.Regex.PCRE.Parse
+      Test.QuickCheck.Regex.PCRE.Render
+      Test.QuickCheck.Regex.PCRE.Types
 
-    ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
-    Build-depends: QuickCheck
-                  , Matching == 0.1.0.0
-                  , aeson
-                  , ansi-terminal
-                  , attoparsec
-                  , base
-                  , delay
-                  , extra
-                  , parsec
-                  , regex-pcre
-                  , string-conv
-                  , tasty >= 0.10.1
-                  , tasty-hunit
-                  , tasty-quickcheck
-                  , text
-                  , unordered-containers
-                  , vector
+  autogen-modules:       
+      Test.QuickCheck.Regex.PCRE
+      Test.QuickCheck.Regex.PCRE.Parse
+      Test.QuickCheck.Regex.PCRE.Render
+      Test.QuickCheck.Regex.PCRE.Types
+
+  ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
+  Build-depends: QuickCheck
+                , Matching == 0.1.0.0
+                , aeson
+                , ansi-terminal
+                , attoparsec
+                , base
+                , data-default
+                , delay
+                , extra
+                , parsec
+                , regex-pcre
+                , string-conv
+                , tasty >= 0.10.1
+                , tasty-hunit
+                , tasty-quickcheck
+                , text
+                , unordered-containers
+                , vector
   default-language:    Haskell2010

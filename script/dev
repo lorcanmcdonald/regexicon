@@ -1,0 +1,2 @@
+#!/bin/bash
+ghcid --lint --command="ghci src/Tests/Main.hs" --test="main"

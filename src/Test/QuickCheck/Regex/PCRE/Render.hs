@@ -41,8 +41,8 @@ instance RegexRenderer Quantifiable where
   render (Backslash WordCharacter) = "\\w"
   render (Backslash NonWordCharacter) = "\\W"
   render (Character c) = [c]
-  render (CharacterClass chars) = "[" <> concatMap render chars <> "]"
-  render (NegatedCharacterClass chars) = "[^" <> concatMap render chars <> "]"
+  render (CharacterClass firstChar chars) = "[" <> render firstChar <> concatMap render chars <> "]"
+  render (NegatedCharacterClass firstChar chars) = "[^" <> render firstChar <> concatMap render chars <> "]"
   render (Subpattern chars) = "(" <> concatMap render chars <> ")"
 
 instance RegexRenderer MetaCharacter where

@@ -8,6 +8,7 @@ mkdir -p "$DIR/obj"
 
 docker build \
   -t lorcan/haskell-build:8.6 \
+  --build-arg regex_user_id=$UID \
   --file "$DIR/containers/haskell-build.Dockerfile" \
   "$DIR"
 
@@ -16,6 +17,7 @@ run_haskell() {
   docker run \
       --rm \
       -ti \
+      -u $(id -u ${USER}):$(id -g ${USER}) \
       -v "$DIR/:/opt/build" \
       -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
       -v "$DIR/obj/dist-newstyle:/opt/build/dist-newstyle" \
@@ -40,14 +42,15 @@ run_node() {
   set -u
 }
 
-sudo chown -R "$USER" "$DIR"
-
-run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin v2-update && cabal --symlink-bindir=/opt/build/bin v2-install --dependencies-only"
-run_haskell cabal v2-build
+run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-update && cabal --symlink-bindir=/opt/build/bin new-install --dependencies-only"
+run_haskell cabal new-build
 
 run_node npm install
 run_node "./node_modules/.bin/webpack" \
   --config "webpack.config.js" \
   --mode=production
 
-docker build -t lorcan/regex-candidates --file "$DIR/containers/service.Dockerfile" "$DIR"
+docker build \
+  -t lorcan/regex-candidates \
+  --build-arg regex_user_id=$UID \
+  --file "$DIR/containers/service.Dockerfile" "$DIR"

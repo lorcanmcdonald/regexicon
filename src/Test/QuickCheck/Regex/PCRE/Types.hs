@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, GeneralizedNewtypeDeriving, OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 module Test.QuickCheck.Regex.PCRE.Types
   ( CharacterClassCharacter (..)
   , MetaCharacter (..)
@@ -11,6 +11,7 @@ module Test.QuickCheck.Regex.PCRE.Types
   , extractPositiveRange
   , extractRange
   , inCharacterClassCharacter
+  , nonalphanumeric
   , orderedRange
   , positiveOrderedRange
   , regexChars
@@ -37,8 +38,8 @@ data Quantifiable
   = AnyCharacter
   | Character Char
   | Backslash BackslashSequence
-  | CharacterClass [CharacterClassCharacter]
-  | NegatedCharacterClass [CharacterClassCharacter]
+  | CharacterClass CharacterClassCharacter [CharacterClassCharacter]
+  | NegatedCharacterClass CharacterClassCharacter [CharacterClassCharacter]
   | Subpattern [RegexCharacter]
   deriving (Eq, Generic, Show)
 
@@ -65,10 +66,10 @@ data BackslashSequence
   | NotVerticalWhiteSpace
   | WordCharacter
   | NonWordCharacter
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Show)
 
 data OrderedRange a = OrderedRange a a
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Show)
 
 newtype PositiveOrderedRange a = PositiveOrderedRange (OrderedRange a)
   deriving (Eq, Generic, Show)
@@ -115,16 +116,16 @@ instance Arbitrary Quantifiable where
         [ pure AnyCharacter
         , Character <$> regexChars
         , Backslash <$> arbitrary
-        , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
-        , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
+        , CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
+        , NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
         ]
       quant' n | n >= 0 && n <= 3 -- Subpattern can cause very deep trees at larger sizes
         = oneof
         [ pure AnyCharacter
         , Character <$> regexChars
         -- , Backslash <$> arbitrary
-        , CharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
-        , NegatedCharacterClass <$> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
+        , CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary) -- CharacterClass must have at least one element
+        , NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
         , fmap Subpattern arbitrary
         ]
       quant' _ = pure AnyCharacter
@@ -163,13 +164,15 @@ instance Arbitrary BackslashSequence where
     -- , pure NonWordCharacter
     ]
 
-  shrink = genericShrink
+  -- shrink = error "nonalphanumeric has invarients which genericShrink does not maintain"
+
 nonalphanumeric :: Gen Char
 nonalphanumeric = arbitraryASCIIChar `suchThat`
   (\ x
-    -> not $ isDigit x
-    || isAsciiUpper x
-    || isAsciiLower x
+    -> not (isDigit x)
+    && x /= '\NUL'
+    && not (isAsciiUpper x)
+    && not (isAsciiLower x)
   )
 
 instance (Arbitrary a, Ord a) => Arbitrary (OrderedRange a) where
@@ -181,8 +184,6 @@ instance (Arbitrary a, Ord a) => Arbitrary (OrderedRange a) where
       return (OrderedRange a b)
     else
       return (OrderedRange b a)
-
-  shrink = genericShrink
 
 instance (Arbitrary a, Num a, Ord a) => Arbitrary (PositiveOrderedRange a) where
   arbitrary
@@ -205,7 +206,7 @@ extractRange :: OrderedRange a -> (a, a)
 extractRange (OrderedRange c d) = (c, d)
 
 extractPositiveRange :: PositiveOrderedRange a -> (a, a)
-extractPositiveRange (PositiveOrderedRange (OrderedRange c d)) = (c, d)
+extractPositiveRange (PositiveOrderedRange oRange) = extractRange oRange
 
 inCharacterClassCharacter :: Char -> CharacterClassCharacter -> Bool
 inCharacterClassCharacter c (ClassLiteral l) = c == l

@@ -15,11 +15,20 @@ module Test.QuickCheck.Regex.PCRE
   , toText
   ) where
 import Data.Char (isDigit)
-import Test.QuickCheck
 import Test.QuickCheck.Regex.PCRE.Parse
 import Test.QuickCheck.Regex.PCRE.Render
 import Test.QuickCheck.Regex.PCRE.Types
-import Test.QuickCheck (Gen)
+import Test.QuickCheck
+  ( Gen
+  , arbitraryASCIIChar
+  , choose
+  , elements
+  , listOf
+  , listOf1
+  , oneof
+  , suchThat
+  , vectorOf
+  )
 
 matching :: Regex -> Gen String
 matching (Regex reChar) = charList reChar
@@ -29,7 +38,7 @@ matching (EndOfString reChar) = charList reChar
 matching (StartAndEndOfString reChar) = charList reChar
 
 charList :: [RegexCharacter] -> Gen String
-charList = fmap concat . sequence . fmap matchingChar
+charList = fmap concat . traverse matchingChar
 
 matchingChar :: RegexCharacter -> Gen String
 matchingChar (Quant q) = matchingQuantifiable q
@@ -39,11 +48,11 @@ matchingQuantifiable :: Quantifiable -> Gen String
 matchingQuantifiable AnyCharacter = fmap (: "") regexChars
 matchingQuantifiable (Backslash b) = matchingBackslash b
 matchingQuantifiable (Character char) = elements [[char]]
-matchingQuantifiable (CharacterClass chars)
-  = oneof $ matchingCharacterClassCharacters <$> chars
-matchingQuantifiable (NegatedCharacterClass chars)
+matchingQuantifiable (CharacterClass firstChar chars)
+  = oneof $ matchingCharacterClassCharacters <$> (firstChar : chars)
+matchingQuantifiable (NegatedCharacterClass firstChar chars)
   = (: []) <$> regexChars
-  `suchThat` (\ a -> all (not . inCharacterClassCharacter a) chars)
+  `suchThat` (\ a -> (not . any (inCharacterClassCharacter a)) (firstChar : chars))
 matchingQuantifiable (Subpattern re) = charList re
 
 matchingMeta :: MetaCharacter -> Gen String
@@ -55,7 +64,7 @@ matchingMeta (MinMax q r) = do
   fmap concat . vectorOf k $ matchingQuantifiable q
 
 matchingBackslash :: BackslashSequence -> Gen String
-matchingBackslash (Nonalphanumeric c) = show <$> pure c
+matchingBackslash (Nonalphanumeric c) = pure (c : "")
 matchingBackslash Digit
   = oneof
   [ pure "0"

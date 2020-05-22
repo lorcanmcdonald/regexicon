@@ -4,6 +4,7 @@ import Data.Char
 import Data.Default
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
+import Data.Functor (($>))
 
 parseRegex :: String -> Either ParseError Regex
 parseRegex = parse (regex <* eof) "(unknown)"
@@ -18,8 +19,8 @@ regex = try (StartOfString <$> (string "^" *> many1 regexCharacter))
         <*> (many1 regexCharacter `sepBy` string "|"))
     <|> try (Alternative
         <$> (many1 regexCharacter <* string "|")
-        <*> (many1 regexCharacter)
-        <*> (return []))
+        <*> many1 regexCharacter
+        <*> return [])
     <|> try (Regex <$> many1 regexCharacter)
     <?> "regex"
 
@@ -88,16 +89,20 @@ subpattern
 
 backslashSequence :: GenParser Char st Quantifiable
 backslashSequence
-  = Backslash <$> (string "\\d" *> pure Digit)
+  = Backslash <$> (string "\\d" $> Digit)
 
 characterClass :: GenParser Char st Quantifiable
 characterClass
-  = CharacterClass <$> (string "[" *> many1 characterClassCharacters <* string "]")
+  = CharacterClass
+    <$> (string "[" *> characterClassCharacters)
+    <*> (many characterClassCharacters <* string "]")
     <?> "CharacterClass"
 
 negatedCharacterClass :: GenParser Char st Quantifiable
 negatedCharacterClass
-  = NegatedCharacterClass <$> (string "[^" *> many1 characterClassCharacters <* string "]")
+  = NegatedCharacterClass
+    <$> (string "[^" *> characterClassCharacters)
+    <*> (many characterClassCharacters <* string "]")
     <?> "NegatedCharacterClass"
 
 characterClassCharacters :: GenParser Char st CharacterClassCharacter

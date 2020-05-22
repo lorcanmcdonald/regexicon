@@ -39,6 +39,7 @@ tests = testGroup "Tests"
     , testGroup "Failure cases"
       [ testCase "empty string" test_empty
       , testCase "*" test_invalid_pattern
+      , testCase "[]" test_empty_character_class
       ]
     , testGroup "Transitive properties"
       [ testProperty "parse with PCRE lib" prop_matching_produces_valid_matches
@@ -72,7 +73,14 @@ test_match_end =
     (Right (EndOfString [Quant (Character 'a')])) (parseRegex "a$")
 
 test_invalid_pattern :: Assertion
-test_invalid_pattern = assertBool "Parsed an invalid pattern" . isLeft . parseRegex $ "*"
+test_invalid_pattern
+  = assertBool "Parsed an invalid pattern"
+  . isLeft . parseRegex $ "*"
+
+test_empty_character_class :: Assertion
+test_empty_character_class
+  = assertBool "Parsed empty character class"
+  . isLeft . parseRegex $ "[]"
 
 test_alternatives :: Assertion
 test_alternatives = assertEqual "Incorrectly parsed pattern"
@@ -105,20 +113,20 @@ test_character_class :: Assertion
 test_character_class = assertEqual "Incorrectly parsed pattern"
   (parseRegex "[ab]")
   (Right
-    (Regex [ Quant (CharacterClass [ ClassLiteral 'a', ClassLiteral 'b'])]))
+    (Regex [ Quant (CharacterClass (ClassLiteral 'a') [ClassLiteral 'b'])]))
 
 test_negated_character_class :: Assertion
 test_negated_character_class = assertEqual "Incorrectly parsed pattern"
   (parseRegex "[^a]")
   (Right
-    (Regex [ Quant (NegatedCharacterClass [ ClassLiteral 'a' ])]))
+    (Regex [ Quant (NegatedCharacterClass (ClassLiteral 'a') [])]))
 
 test_website_example :: Assertion
 test_website_example = assertEqual "Incorrectly parsed pattern"
   (parseRegex "[0-9a-f]{32}")
   (Right
-    (Regex [ Meta (MinMax (CharacterClass [
-      ClassRange (fromJust . orderedRange '0' $ '9'), ClassRange (fromJust . orderedRange 'a' $ 'f')
+    (Regex [ Meta (MinMax (CharacterClass (ClassRange (fromJust . orderedRange '0' $ '9'))[
+      ClassRange (fromJust . orderedRange 'a' $ 'f')
       ]) (fromJust . positiveOrderedRange 0 $ 32))]))
 
 test_digit :: Assertion
@@ -164,15 +172,14 @@ test_matching_digit = do
     aRegex = Regex [ Quant (Backslash Digit) ]
 
 prop_matching_produces_valid_matches :: Regex -> Property
-prop_matching_produces_valid_matches regex = do
-  ioProperty $ validRegex regex
+prop_matching_produces_valid_matches regex = ioProperty $ validRegex regex
   where
     validRegex :: Regex -> IO Bool
     validRegex re = do
       ex <- examples re
-      let result = filter (not . pcreMatch re) ex
+      let result = filter (not . pcreMatch re) . fmap (<> "\n") $ ex
       -- debugPrint re ex
-      if length result > 0 then do
+      if not (null result) then do
         debugPrint re result
         return False
       else
@@ -193,6 +200,8 @@ prop_matching_produces_valid_matches regex = do
       setSGR [SetColor Foreground Dull Blue]
       putStr " =~ "
       setSGR [Reset]
+      setSGR [SetColor Background Dull Blue]
       putStrLn $ intercalate "\n • " ex
+      setSGR [Reset]
       putStrLn ""
       hFlush stdout
