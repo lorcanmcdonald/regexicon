@@ -3,7 +3,7 @@ module Main where
 import Control.Monad
 import Control.Time
 import Data.Either.Extra (isLeft)
-import Data.List (intercalate)
+import Data.List (intercalate, isInfixOf)
 import Data.Maybe
 import Data.String.Conv
 import System.Console.ANSI
@@ -13,6 +13,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
 import Text.Regex.PCRE hiding (Regex)
+import Control.Exception (SomeException, catch)
 
 main :: IO ()
 main = defaultMain tests
@@ -172,7 +173,8 @@ test_matching_digit = do
     aRegex = Regex [ Quant (Backslash Digit) ]
 
 prop_matching_produces_valid_matches :: Regex -> Property
-prop_matching_produces_valid_matches regex = ioProperty $ validRegex regex
+prop_matching_produces_valid_matches regex =
+  ioProperty (validRegex regex `catch` handleException regex)
   where
     validRegex :: Regex -> IO Bool
     validRegex re = do
@@ -190,6 +192,24 @@ prop_matching_produces_valid_matches regex = ioProperty $ validRegex regex
     examples = replicateM 5 . generate . matching
     reAsString :: Regex -> String
     reAsString = toS . toText
+    handleException :: Regex -> SomeException -> IO Bool
+    handleException regexEx x = do
+      let str = show x
+      if "ReturnCode (-8)" `isInfixOf ` str
+         || "regular expression is too large" `isInfixOf` str then
+        -- The PCRE return code PCRE_ERROR_MATCHLIMIT maps to -8. This
+        -- indicates that the regex passed is taking too long to execute. We're
+        -- going to ignore that as a concern as the web interface already has
+        -- a guard to ensure that we don't spend too long responding to a
+        -- request
+        --
+        -- Similarly if Quickcheck produces a very large regular expression,
+        -- we'll just ignore the fact that the PCRE library wouldn't handle it
+        return True
+      else do
+        putStrLn . toS . toText $ regexEx
+        print x
+        return False
 
     debugPrint re ex = do
       delay (1 :: Integer)
