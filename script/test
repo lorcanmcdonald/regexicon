@@ -11,7 +11,6 @@ run_haskell() {
   docker run \
       --rm \
       -ti \
-      --user $UID \
       -v "$DIR/:/opt/build" \
       -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
       -v "$DIR/obj/dist-newstyle:/opt/build/dist-newstyle" \

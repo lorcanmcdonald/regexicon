@@ -35,7 +35,7 @@ run_node() {
       --rm \
       -e HOME=/opt/build/obj \
       -ti \
-      -u $(id -u ${USER}):$(id -g ${USER}) \
+      -u "$(id -u "${USER}"):$(id -g "${USER}")" \
       -v "$DIR/js:/opt/build" \
       -w /opt/build \
       node:13.1 \
@@ -43,8 +43,8 @@ run_node() {
   set -u
 }
 
-run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-update && cabal --symlink-bindir=/opt/build/bin new-install --dependencies-only"
-run_haskell cabal new-build
+run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-update"
+run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-build"
 
 run_node npm install
 run_node "./node_modules/.bin/webpack" \
