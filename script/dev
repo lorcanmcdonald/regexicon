@@ -1,2 +1,3 @@
 #!/bin/bash
+export TASTY_HIDE_SUCCESSES=True
 ghcid --lint --command="ghci src/Tests/Main.hs" --test="main"
