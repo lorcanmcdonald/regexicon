@@ -5,6 +5,7 @@ IFS=$'\n\t'
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 
 mkdir -p "$DIR/obj"
+mkdir -p "$DIR/dist-newstyle"
 
 docker build \
   -t lorcan/haskell-build:8.6 \
@@ -17,7 +18,6 @@ run_haskell() {
   docker run \
       --rm \
       -ti \
-      -u $(id -u ${USER}):$(id -g ${USER}) \
       -v "$DIR/:/opt/build" \
       -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
       -v "$DIR/obj/dist-newstyle:/opt/build/dist-newstyle" \
