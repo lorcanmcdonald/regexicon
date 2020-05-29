@@ -77,7 +77,7 @@ Test-suite test-matching
 
   ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
   Build-depends: QuickCheck
-                , Matching == 0.1.0.0
+                , Matching
                 , aeson
                 , ansi-terminal
                 , attoparsec
