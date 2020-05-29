@@ -11,7 +11,7 @@
   "dependencies": {
     "cli-color": "^2.0.0",
     "eslint-plugin-flowtype": "^2.34.0",
-    "jquery": "^3.4.0",
+    "jquery": "^3.5.0",
     "node-fetch": "^1.7.1",
     "preact": "*",
     "preact-compat": "*",
@@ -24,9 +24,11 @@
     "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.7.2",
+    "@babel/cli": "^7.10.1",
+    "@babel/core": "^7.10.1",
     "@babel/preset-env": "^7.7.1",
     "@babel/preset-react": "^7.7.0",
+    "braces": "^3.0.0",
     "babel-cli": "*",
     "babel-eslint": "^10.0.3",
     "babel-loader": "^8.0.6",
@@ -37,7 +39,6 @@
     "eslint-plugin-import": "^2.17.3",
     "eslint-plugin-jsx-a11y": "^5.1.0",
     "eslint-plugin-react": "^7.1.0",
-    "uglifyjs-webpack-plugin": "*",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.2"
   }
