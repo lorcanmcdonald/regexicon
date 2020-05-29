@@ -56,6 +56,20 @@ data CharacterClassCharacter
 
 data BackslashSequence
   = Nonalphanumeric Char
+  | BackslashChar
+  | Caret
+  | Dollar
+  | Dot
+  | OpenSquareBracket
+  | Pipe
+  | OpenParens
+  | CloseParens
+  | QuestionMark
+  | Asterisk
+  | Plus
+  | OpenBrace
+  | Hyphen
+  | CloseSquareBracket
   | Digit
   | NonDigit
   | HorizontalWhiteSpace

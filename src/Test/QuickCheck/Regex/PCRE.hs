@@ -65,6 +65,20 @@ matchingMeta (MinMax q r) = do
 
 matchingBackslash :: BackslashSequence -> Gen String
 matchingBackslash (Nonalphanumeric c) = pure (c : "")
+matchingBackslash BackslashChar = pure "\\"
+matchingBackslash Caret = pure "\\^"
+matchingBackslash Dollar = pure "\\$"
+matchingBackslash Dot = pure "\\."
+matchingBackslash OpenSquareBracket = pure "\\["
+matchingBackslash Pipe = pure "\\|"
+matchingBackslash OpenParens = pure "\\("
+matchingBackslash CloseParens = pure "\\)"
+matchingBackslash QuestionMark = pure "\\?"
+matchingBackslash Asterisk = pure "\\*"
+matchingBackslash Plus = pure "\\+"
+matchingBackslash OpenBrace = pure "\\{"
+matchingBackslash Hyphen = pure "\\-"
+matchingBackslash CloseSquareBracket = pure "\\]"
 matchingBackslash Digit
   = oneof
   [ pure "0"
