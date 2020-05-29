@@ -1,21 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Test.QuickCheck.Regex.PCRE.Render where
+
 import Data.List
 import Test.QuickCheck.Regex.PCRE.Types
 
 toText :: Regex -> String
 toText (Regex chars) = concatMap render chars
 toText (Alternative first second []) =
-  let
-    asRegex = toText . Regex
-  in
-  intercalate "|" [ asRegex first, asRegex second]
+  let asRegex = toText . Regex
+   in intercalate "|" [asRegex first, asRegex second]
 toText (Alternative first second rest) =
-  let
-    asRegex = toText . Regex
-    xs = intercalate "|" $ map asRegex rest
-  in
-  intercalate "|" [ asRegex first, asRegex second, xs ]
+  let asRegex = toText . Regex
+      xs = intercalate "|" $ map asRegex rest
+   in intercalate "|" [asRegex first, asRegex second, xs]
 toText (StartOfString re) = "^" <> concatMap render re
 toText (EndOfString re) = concatMap render re <> "$"
 toText (StartAndEndOfString re) = "^" <> concatMap render re <> "$"
@@ -68,7 +66,6 @@ instance RegexRenderer MetaCharacter where
 
 instance RegexRenderer CharacterClassCharacter where
   render (ClassLiteral c) = [c]
-  render (ClassRange r)
-    =
-      let (c, d) = extractRange r
-      in [c] <> "-" <> [d]
+  render (ClassRange r) =
+    let (c, d) = extractRange r
+     in [c] <> "-" <> [d]
