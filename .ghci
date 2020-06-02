@@ -1,3 +1,8 @@
 :set -fwarn-unused-binds -fwarn-unused-imports -fwarn-orphans
 :set -isrc
 :set -fobject-code
+
+
+:set -ignore-package pretty-simple -package pretty-simple
+:def! pretty \ _ -> pure ":set -interactive-print Text.Pretty.Simple.pPrint"
+:pretty

@@ -32,6 +32,7 @@ library
                      , bytestring
                      , data-default
                      , parsec
+                     , pretty-simple
                      , regex-tdfa
                      , scotty
                      , string-conv
@@ -86,6 +87,7 @@ Test-suite test-matching
                 , delay
                 , extra
                 , parsec
+                , pretty-simple
                 , regex-pcre
                 , string-conv
                 , tasty >= 0.10.1
