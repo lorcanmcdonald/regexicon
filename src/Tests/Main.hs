@@ -214,8 +214,8 @@ shouldBe :: String -> Regex -> Assertion
 shouldBe s regex =
   assertEqual
     "Incorrectly parsed pattern"
-    (parseRegex s)
     (Right regex)
+    (parseRegex s)
 
 test_transitive_a :: Assertion
 test_transitive_a =
