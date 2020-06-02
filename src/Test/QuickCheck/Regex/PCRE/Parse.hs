@@ -152,6 +152,7 @@ characterClassCharacters =
           Nothing -> fail "Range out of order in charcter class"
     )
     <|> try (ClassLiteral <$> validChars)
+    <|> try (QuotedClassLiterals <$> (string "\\Q" *> manyTill anyChar (try (string "\\E"))))
     <?> "CharacterClassCharacter"
   where
     validChars = noneOf "\\^[]-"

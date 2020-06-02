@@ -159,3 +159,4 @@ matchingCharacterClassCharacters :: CharacterClassCharacter -> Gen String
 matchingCharacterClassCharacters (ClassLiteral c) = elements [[c]]
 matchingCharacterClassCharacters (ClassRange r) =
   fmap (: "") . choose $ extractRange r
+matchingCharacterClassCharacters (QuotedClassLiterals c) = elements [c]

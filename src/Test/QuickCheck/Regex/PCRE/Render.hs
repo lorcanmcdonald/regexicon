@@ -70,3 +70,4 @@ instance RegexRenderer CharacterClassCharacter where
   render (ClassRange r) =
     let (c, d) = extractRange r
      in [c] <> "-" <> [d]
+  render (QuotedClassLiterals c) = "\\Q" <> c <> "\\E"

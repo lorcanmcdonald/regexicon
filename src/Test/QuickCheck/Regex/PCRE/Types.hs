@@ -57,6 +57,7 @@ data MetaCharacter
 data CharacterClassCharacter
   = ClassLiteral Char
   | ClassRange (OrderedRange Char)
+  | QuotedClassLiterals [Char]
   deriving (Eq, Generic, Show)
 
 data BackslashSequence
@@ -239,3 +240,4 @@ inCharacterClassCharacter c (ClassRange r) =
   c >= a && c <= b
   where
     (a, b) = extractRange r
+inCharacterClassCharacter c (QuotedClassLiterals q) = any (\l -> c == l) q

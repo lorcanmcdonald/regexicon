@@ -5,7 +5,7 @@ module Main where
 import Control.Exception (SomeException, catch)
 import Control.Monad
 import Control.Time
-import Data.Either.Extra (isLeft)
+import Data.Either.Extra (fromRight, isLeft)
 import Data.List (intercalate, isInfixOf)
 import Data.Maybe
 import Data.String.Conv
@@ -71,7 +71,13 @@ tests =
                 ("\\W" `shouldBe` Regex [Quant (Backslash NonWordCharacter)]),
               testCase
                 "\\Q...*\\E"
-                ("\\Q...*\\E" `shouldBe` Regex [Quoted "...*"])
+                ("\\Q...*\\E" `shouldBe` Regex [Quoted "...*"]),
+              testCase
+                "[\\Q^.\\E]"
+                ("[\\Q^.\\E]" `shouldBe` Regex [Quant (CharacterClass (QuotedClassLiterals ['^', '.']) [])]),
+              testCase
+                "render [\\Q^.\\E]"
+                test_render_quotedclassliterals
             ],
           testGroup
             "Failure cases"
@@ -262,6 +268,13 @@ test_matching_digit = do
     aString = replicateM 10 . generate . matching $ aRegex
     aRegex :: Regex
     aRegex = Regex [Quant (Backslash Digit)]
+
+test_render_quotedclassliterals :: Assertion
+test_render_quotedclassliterals =
+  assertEqual
+    "parse and render did not preserve original regex string"
+    "[\\Q^.\\E]"
+    (toText . fromRight (Regex []) . parseRegex $ "[\\Q^.\\E]")
 
 prop_matching_produces_valid_matches :: Regex -> Property
 prop_matching_produces_valid_matches regex =
