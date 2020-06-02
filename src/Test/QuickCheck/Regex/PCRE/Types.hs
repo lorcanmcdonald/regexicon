@@ -36,6 +36,7 @@ data Regex
 data RegexCharacter
   = Quant Quantifiable
   | Meta MetaCharacter
+  | Quoted String
   deriving (Eq, Generic, Show)
 
 data Quantifiable

@@ -24,6 +24,7 @@ class RegexRenderer a where
 instance RegexRenderer RegexCharacter where
   render (Quant q) = render q
   render (Meta m) = render m
+  render (Quoted s) = s
 
 instance RegexRenderer Quantifiable where
   render AnyCharacter = "."

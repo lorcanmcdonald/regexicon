@@ -46,6 +46,7 @@ charList = fmap concat . traverse matchingChar
 matchingChar :: RegexCharacter -> Gen String
 matchingChar (Quant q) = matchingQuantifiable q
 matchingChar (Meta m) = matchingMeta m
+matchingChar (Quoted s) = pure s
 
 matchingQuantifiable :: Quantifiable -> Gen String
 matchingQuantifiable AnyCharacter = fmap (: "") regexChars

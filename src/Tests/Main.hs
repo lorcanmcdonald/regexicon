@@ -68,7 +68,10 @@ tests =
                 ("\\w" `shouldBe` Regex [Quant (Backslash WordCharacter)]),
               testCase
                 "\\W"
-                ("\\W" `shouldBe` Regex [Quant (Backslash NonWordCharacter)])
+                ("\\W" `shouldBe` Regex [Quant (Backslash NonWordCharacter)]),
+              testCase
+                "\\Q...*\\E"
+                ("\\Q...*\\E" `shouldBe` Regex [Quoted "...*"])
             ],
           testGroup
             "Failure cases"

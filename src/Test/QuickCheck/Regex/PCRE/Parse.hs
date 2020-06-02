@@ -33,7 +33,8 @@ regex =
 
 regexCharacter :: GenParser Char st RegexCharacter
 regexCharacter =
-  try (Meta <$> metacharacter)
+  try (Quoted <$> (string "\\Q" *> manyTill anyChar (try (string "\\E"))))
+    <|> try (Meta <$> metacharacter)
     <|> try (Quant <$> quantifiable)
     <?> "regexCharacter"
 
