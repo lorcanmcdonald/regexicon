@@ -23,80 +23,125 @@ main = defaultMain tests
 tests :: TestTree
 tests =
   testGroup
-    "Tests"
-    [ testGroup
-        "Parse"
-        [ testGroup
-            "Simple patterns"
-            [ testCase "a|b" test_alternatives,
-              testCase "[ab]" test_character_class,
-              testCase "[^a]" test_negated_character_class,
-              testCase "\\*" test_escape_metachar,
-              testCase "\\=" test_escape_normal_character,
-              testCase "." test_meta_char,
-              testCase "^a" test_multiple_char,
-              testCase "a$" test_match_end,
-              testCase "a+" test_one_or_more,
-              testCase "a" test_single_char,
-              testCase "a(b)" test_subpattern,
-              testCase "a*" test_zero_or_more,
-              testCase "[0-9a-f]{32}" test_website_example,
-              testCase "\\d" test_digit,
-              testCase
-                "\\D"
-                ("\\D" `shouldBe` Regex [Quant (Backslash NonDigit)]),
-              testCase
-                "\\h"
-                ("\\h" `shouldBe` Regex [Quant (Backslash HorizontalWhiteSpace)]),
-              testCase
-                "\\H"
-                ("\\H" `shouldBe` Regex [Quant (Backslash NotHorizontalWhiteSpace)]),
-              testCase
-                "\\s"
-                ("\\s" `shouldBe` Regex [Quant (Backslash WhiteSpace)]),
-              testCase
-                "\\S"
-                ("\\S" `shouldBe` Regex [Quant (Backslash NotWhiteSpace)]),
-              testCase
-                "\\v"
-                ("\\v" `shouldBe` Regex [Quant (Backslash VerticalWhiteSpace)]),
-              testCase
-                "\\V"
-                ("\\V" `shouldBe` Regex [Quant (Backslash NotVerticalWhiteSpace)]),
-              testCase
-                "\\w"
-                ("\\w" `shouldBe` Regex [Quant (Backslash WordCharacter)]),
-              testCase
-                "\\W"
-                ("\\W" `shouldBe` Regex [Quant (Backslash NonWordCharacter)]),
-              testCase
-                "\\Q...*\\E"
-                ("\\Q...*\\E" `shouldBe` Regex [Quoted "...*"]),
-              testCase
-                "[\\Q^.\\E]"
-                ("[\\Q^.\\E]" `shouldBe` Regex [Quant (CharacterClass (QuotedClassLiterals ['^', '.']) [])]),
-              testCase
-                "render [\\Q^.\\E]"
-                test_render_quotedclassliterals
-            ],
-          testGroup
-            "Failure cases"
-            [ testCase "empty string" test_empty,
-              testCase "*" test_invalid_pattern,
-              testCase "[]" test_empty_character_class
-            ],
-          testGroup
-            "Transitive properties"
-            [ testProperty "parse with PCRE lib" prop_matching_produces_valid_matches,
-              testCase "transitive example: a|a. " test_transitive_a,
-              testCase "transitive example: a|a.|([a-b]+)|a{1,3}" test_transitive_b
-            ]
-        ],
+    ""
+    [ testGroup "Parse" parseTests,
       testGroup
         "Matching"
         [ testCase "\\d" test_matching_digit
         ]
     ]
+
+parseTests :: [TestTree]
+parseTests =
+  [ testGroup
+      "Simple patterns"
+      [ testCase "a|b" test_alternatives,
+        testCase "[ab]" test_character_class,
+        testCase "[^a]" test_negated_character_class,
+        testCase "\\*" test_escape_metachar,
+        testCase "\\=" test_escape_normal_character,
+        testCase "." test_meta_char,
+        testCase "^a" test_multiple_char,
+        testCase "a$" test_match_end,
+        testCase "a+" test_one_or_more,
+        testCase "a" test_single_char,
+        testCase "a(b)" test_subpattern,
+        testCase "a*" test_zero_or_more,
+        testCase "[0-9a-f]{32}" test_website_example,
+        testCase "\\d" test_digit
+      ],
+    testGroup
+      "Backslash patterns"
+      [ testCase
+          "\\D"
+          ("\\D" `shouldBe` Regex [Quant (Backslash NonDigit)]),
+        testCase
+          "\\h"
+          ("\\h" `shouldBe` Regex [Quant (Backslash HorizontalWhiteSpace)]),
+        testCase
+          "\\H"
+          ("\\H" `shouldBe` Regex [Quant (Backslash NotHorizontalWhiteSpace)]),
+        testCase
+          "\\s"
+          ("\\s" `shouldBe` Regex [Quant (Backslash WhiteSpace)]),
+        testCase
+          "\\S"
+          ("\\S" `shouldBe` Regex [Quant (Backslash NotWhiteSpace)]),
+        testCase
+          "\\v"
+          ("\\v" `shouldBe` Regex [Quant (Backslash VerticalWhiteSpace)]),
+        testCase
+          "\\V"
+          ("\\V" `shouldBe` Regex [Quant (Backslash NotVerticalWhiteSpace)]),
+        testCase
+          "\\w"
+          ("\\w" `shouldBe` Regex [Quant (Backslash WordCharacter)]),
+        testCase
+          "\\W"
+          ("\\W" `shouldBe` Regex [Quant (Backslash NonWordCharacter)]),
+        testCase
+          "\\Q...*\\E"
+          ("\\Q...*\\E" `shouldBe` Regex [Quoted "...*"]),
+        testCase
+          "[\\Q^.\\E]"
+          ("[\\Q^.\\E]" `shouldBe` Regex [Quant (CharacterClass (QuotedClassLiterals ['^', '.']) [])]),
+        testCase
+          "render [\\Q^.\\E]"
+          test_render_quotedclassliterals,
+        testCase
+          "\a"
+          ("\a" `shouldBe` Regex [Quant (Character '\a')]),
+        testCase
+          "\\01"
+          ("\\01" `shouldBe` Regex [Quant (Backslash (NonprintingOctalCode 1))]),
+        testCase
+          "\\013"
+          ("\\013" `shouldBe` Regex [Quant (Backslash (NonprintingOctalCode 11))]),
+        testCase
+          "\\113"
+          ("\\113" `shouldBe` Regex [Quant (Backslash (NonprintingOctalCode 75))]),
+        testCase
+          "\\o{013}"
+          ("\\o{013}" `shouldBe` Regex [Quant (Backslash (NonprintingOctalCodeBraces 11))]),
+        testCase
+          "\\xFF"
+          ("\\xFF" `shouldBe` Regex [Quant (Backslash (NonprintingHexCode 255))]),
+        testCase
+          "\\x{FF}"
+          ("\\x{FF}" `shouldBe` Regex [Quant (Backslash (NonprintingHexCodeBraces 255))]),
+        testCase
+          "\\0\\x\\015"
+          ( "\\0\\x\\015"
+              `shouldBe` Regex
+                [ Quant (Backslash (NonprintingOctalCode 0)),
+                  Quant (Backslash NonprintingHexZero),
+                  Quant (Backslash (NonprintingOctalCode 13))
+                ]
+          )
+      ],
+    testGroup
+      "Failure cases"
+      [ testCase "empty string" test_empty,
+        testCase "*" test_invalid_pattern,
+        testCase "[]" test_empty_character_class
+      ],
+    testGroup
+      "Transitive properties"
+      [ testProperty "parse with PCRE lib" prop_matching_produces_valid_matches,
+        testCase
+          "transitive example: a|a. "
+          (isTransitive "a|a."),
+        testCase
+          "transitive example: a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:"
+          (isTransitive "a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:"),
+        testCase
+          "transitive example: \\x"
+          (isTransitive "\\x"),
+        testCase
+          "transitive example: \\x0"
+          (isTransitive "\\x0")
+      ]
+  ]
 
 test_empty :: Assertion
 test_empty = assertBool "Empty pattern doesn't fail" . isLeft . parseRegex $ ""
@@ -226,23 +271,12 @@ shouldBe s regex =
     (Right regex)
     (parseRegex s)
 
-test_transitive_a :: Assertion
-test_transitive_a =
+isTransitive :: String -> Assertion
+isTransitive str =
   assertEqual
     "parsed and rendered version not equal"
     (Right str)
     (fmap toText . parseRegex $ str)
-  where
-    str = "a|a."
-
-test_transitive_b :: Assertion
-test_transitive_b =
-  assertEqual
-    "parsed and rendered version not equal"
-    (Right str)
-    (fmap toText . parseRegex $ str)
-  where
-    str = "a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:"
 
 test_escape_metachar :: Assertion
 test_escape_metachar =

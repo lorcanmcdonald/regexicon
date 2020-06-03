@@ -3,6 +3,7 @@
 module Test.QuickCheck.Regex.PCRE.Render where
 
 import Data.List
+import Numeric (showHex, showOct)
 import Test.QuickCheck.Regex.PCRE.Types
 
 toText :: Regex -> String
@@ -43,6 +44,19 @@ instance RegexRenderer Quantifiable where
   render (Backslash OpenBrace) = "\\{"
   render (Backslash Hyphen) = "\\-"
   render (Backslash CloseSquareBracket) = "\\["
+  render (Backslash NonprintingAlarm) = "\\a"
+  render (Backslash (NonprintingCtrlx x)) = "\\c" <> [x]
+  render (Backslash NonprintingEscape) = "\\e"
+  render (Backslash NonprintingFormFeed) = "\\f"
+  render (Backslash NonprintingLineFeed) = "\\n"
+  render (Backslash NonprintingCarriageReturn) = "\\r"
+  render (Backslash NonprintingTab) = "\\t"
+  render (Backslash (NonprintingOctalCodeZero c)) = "\\0" <> showOct c ""
+  render (Backslash (NonprintingOctalCode c)) = "\\" <> showOct c ""
+  render (Backslash (NonprintingOctalCodeBraces c)) = "\\o{" <> showOct c "" <> "}"
+  render (Backslash NonprintingHexZero) = "\\x"
+  render (Backslash (NonprintingHexCode c)) = "\\x" <> showHex c ""
+  render (Backslash (NonprintingHexCodeBraces c)) = "\\x{" <> showHex c "" <> "}"
   render (Backslash Digit) = "\\d"
   render (Backslash NonDigit) = "\\D"
   render (Backslash HorizontalWhiteSpace) = "\\h"

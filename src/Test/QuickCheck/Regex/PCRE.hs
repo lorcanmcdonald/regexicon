@@ -18,6 +18,7 @@ module Test.QuickCheck.Regex.PCRE
 where
 
 import Data.Char (isDigit)
+import Numeric (showHex, showOct)
 import Test.QuickCheck
   ( Gen,
     arbitraryASCIIChar,
@@ -83,6 +84,19 @@ matchingBackslash Plus = pure "\\+"
 matchingBackslash OpenBrace = pure "\\{"
 matchingBackslash Hyphen = pure "\\-"
 matchingBackslash CloseSquareBracket = pure "\\]"
+matchingBackslash NonprintingAlarm = pure "\\a"
+matchingBackslash (NonprintingCtrlx c) = pure ("\\c" <> [c])
+matchingBackslash NonprintingEscape = pure "\\e"
+matchingBackslash NonprintingFormFeed = pure "\\f"
+matchingBackslash NonprintingLineFeed = pure "\\n"
+matchingBackslash NonprintingCarriageReturn = pure "\\r"
+matchingBackslash NonprintingTab = pure "\\t"
+matchingBackslash (NonprintingOctalCodeZero c) = pure ("\\0" <> showOct c "")
+matchingBackslash (NonprintingOctalCode c) = pure ("\\" <> showOct c "")
+matchingBackslash (NonprintingOctalCodeBraces c) = pure ("\\o{" <> showOct c "" <> "}")
+matchingBackslash NonprintingHexZero = pure "\\x"
+matchingBackslash (NonprintingHexCode c) = pure ("\\x" <> showHex c "")
+matchingBackslash (NonprintingHexCodeBraces c) = pure ("\\x{" <> showHex c "" <> "}")
 matchingBackslash Digit =
   oneof
     [ pure "0",

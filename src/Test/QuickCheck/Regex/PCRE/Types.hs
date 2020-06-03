@@ -57,7 +57,7 @@ data MetaCharacter
 data CharacterClassCharacter
   = ClassLiteral Char
   | ClassRange (OrderedRange Char)
-  | QuotedClassLiterals [Char]
+  | QuotedClassLiterals String
   deriving (Eq, Generic, Show)
 
 data BackslashSequence
@@ -76,6 +76,19 @@ data BackslashSequence
   | OpenBrace
   | Hyphen
   | CloseSquareBracket
+  | NonprintingAlarm
+  | NonprintingCtrlx Char
+  | NonprintingEscape
+  | NonprintingFormFeed
+  | NonprintingLineFeed
+  | NonprintingCarriageReturn
+  | NonprintingTab
+  | NonprintingOctalCodeZero Int
+  | NonprintingOctalCode Int
+  | NonprintingOctalCodeBraces Int
+  | NonprintingHexZero
+  | NonprintingHexCode Int
+  | NonprintingHexCodeBraces Int
   | Digit
   | NonDigit
   | HorizontalWhiteSpace

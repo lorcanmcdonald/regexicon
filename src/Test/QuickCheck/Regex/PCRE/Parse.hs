@@ -5,6 +5,7 @@ module Test.QuickCheck.Regex.PCRE.Parse (parseRegex) where
 import Data.Char
 import Data.Default
 import Data.Functor (($>))
+import Numeric (readHex, readOct)
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
 
@@ -111,6 +112,61 @@ backslashSequence =
                    <|> try (string "{" $> OpenBrace)
                    <|> try (string "-" $> Hyphen)
                    <|> try (string "]" $> CloseSquareBracket)
+                   <|> try (string "a" $> NonprintingAlarm)
+                   <|> try (NonprintingCtrlx <$> (string "c" *> anyChar))
+                   <|> try (string "e" $> NonprintingEscape)
+                   <|> try (string "f" $> NonprintingFormFeed)
+                   <|> try (string "n" $> NonprintingLineFeed)
+                   <|> try (string "r" $> NonprintingCarriageReturn)
+                   <|> try (string "t" $> NonprintingTab)
+                   <|> try
+                     ( do
+                         octText <-
+                           try (count 3 octDigit)
+                             <|> try (count 2 octDigit)
+                             <|> try (count 1 octDigit)
+                         let (octValue, _) = head . readOct $ octText
+                         return . NonprintingOctalCode $ octValue
+                     )
+                   <|> try
+                     ( do
+                         _ <- string "o{"
+                         octText <- many1 octDigit
+                         let (octValue, _) = head . readOct $ octText
+                         _ <- string "}"
+                         return . NonprintingOctalCodeBraces $ octValue
+                     )
+                   <|> try
+                     ( do
+                         _ <- string "x{"
+                         hexText <- many1 hexDigit
+                         let (hexValue, _) = head . readHex $ hexText
+                         _ <- string "}"
+                         return . NonprintingHexCodeBraces $ hexValue
+                     )
+                   <|> try
+                     ( do
+                         _ <- string "x"
+                         hexText <-
+                           try (count 2 hexDigit)
+                             <|> try (count 1 hexDigit)
+                         let hexParse = readHex hexText
+                         return . NonprintingHexCode $
+                           case hexParse of
+                             [] -> 0 :: Int
+                             (val, _) : _ -> val
+                     )
+                   <|> try (string "x" $> NonprintingHexZero)
+                   <|> try
+                     ( do
+                         _ <- string "x{"
+                         hexText <-
+                           try (count 2 hexDigit)
+                             <|> try (count 1 hexDigit)
+                         _ <- string "}"
+                         let (hexValue, _) = head . readHex $ hexText
+                         return . NonprintingHexCodeBraces $ hexValue
+                     )
                    <|> try (string "d" $> Digit)
                    <|> try (string "D" $> NonDigit)
                    <|> try (string "h" $> HorizontalWhiteSpace)
