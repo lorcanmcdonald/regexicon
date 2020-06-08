@@ -7,6 +7,7 @@ module Test.QuickCheck.Regex.PCRE
     OrderedRange,
     Quantifiable (..),
     Regex (..),
+    Pattern (..),
     RegexCharacter (..),
     extractRange,
     matching,
@@ -35,11 +36,13 @@ import Test.QuickCheck.Regex.PCRE.Render
 import Test.QuickCheck.Regex.PCRE.Types
 
 matching :: Regex -> Gen String
-matching (Regex reChar) = charList reChar
-matching (Alternative first second rest) = oneof . map charList $ (first : second : rest)
-matching (StartOfString reChar) = charList reChar
-matching (EndOfString reChar) = charList reChar
-matching (StartAndEndOfString reChar) = charList reChar
+matching (Regex reChar) = matchingPattern reChar
+matching (StartOfString reChar) = matchingPattern reChar
+matching (EndOfString reChar) = matchingPattern reChar
+matching (StartAndEndOfString reChar) = matchingPattern reChar
+
+matchingPattern :: Pattern -> Gen String
+matchingPattern (Alternative x xs) = oneof . map charList $ x : xs
 
 charList :: [RegexCharacter] -> Gen String
 charList = fmap concat . traverse matchingChar
@@ -51,14 +54,16 @@ matchingChar (Quoted s) = pure s
 
 matchingQuantifiable :: Quantifiable -> Gen String
 matchingQuantifiable AnyCharacter = fmap (: "") regexChars
+matchingQuantifiable (AmbiguousNumberSequence _) = error "Should not generate an AmbiguousNumberSequence"
 matchingQuantifiable (Backslash b) = matchingBackslash b
+matchingQuantifiable (BackReference _ p) = matchingPattern p
 matchingQuantifiable (Character char) = elements [[char]]
 matchingQuantifiable (CharacterClass firstChar chars) =
   oneof $ matchingCharacterClassCharacters <$> (firstChar : chars)
 matchingQuantifiable (NegatedCharacterClass firstChar chars) =
   (: []) <$> regexChars
     `suchThat` (\a -> (not . any (inCharacterClassCharacter a)) (firstChar : chars))
-matchingQuantifiable (Subpattern re) = charList re
+matchingQuantifiable (Subpattern re) = matchingPattern re
 
 matchingMeta :: MetaCharacter -> Gen String
 matchingMeta (ZeroOrMore q) = fmap concat . listOf $ matchingQuantifiable q

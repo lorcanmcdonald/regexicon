@@ -1,15 +1,20 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.QuickCheck.Regex.PCRE.Types
   ( CharacterClassCharacter (..),
+    BackslashSequence (..),
     MetaCharacter (..),
     OrderedRange,
+    Pattern (..),
     PositiveOrderedRange,
     Quantifiable (..),
     Regex (..),
     RegexCharacter (..),
-    BackslashSequence (..),
+    SubpatternContainer (..),
+    backslashSequence,
     extractPositiveRange,
     extractRange,
     inCharacterClassCharacter,
@@ -20,45 +25,60 @@ module Test.QuickCheck.Regex.PCRE.Types
   )
 where
 
+import Control.Lens ((^?), element)
+import Control.Lens.Combinators (_Left, over)
+import Control.Lens.Plated
+import Control.Monad
 import Data.Aeson (ToJSON (..))
 import Data.Char
+import Data.Data
+import Data.Data.Lens
+import Data.Functor (($>))
 import GHC.Generics
+import Numeric (readHex, readOct)
 import Test.QuickCheck
+import Text.ParserCombinators.Parsec
+import Text.Read
 
 data Regex
-  = Regex [RegexCharacter]
-  | Alternative [RegexCharacter] [RegexCharacter] [[RegexCharacter]]
-  | StartOfString [RegexCharacter]
-  | EndOfString [RegexCharacter]
-  | StartAndEndOfString [RegexCharacter]
-  deriving (Eq, Generic, Show)
+  = Regex Pattern
+  | StartOfString Pattern
+  | EndOfString Pattern
+  | StartAndEndOfString Pattern
+  deriving (Data, Eq, Generic, Show)
+
+data Pattern
+  = Alternative [RegexCharacter] [[RegexCharacter]]
+  deriving (Data, Eq, Show)
 
 data RegexCharacter
   = Quant Quantifiable
   | Meta MetaCharacter
   | Quoted String
-  deriving (Eq, Generic, Show)
+  deriving (Data, Eq, Generic, Show)
 
 data Quantifiable
   = AnyCharacter
   | Character Char
+  | AmbiguousNumberSequence String
   | Backslash BackslashSequence
+  | BackReference Int Pattern
   | CharacterClass CharacterClassCharacter [CharacterClassCharacter]
   | NegatedCharacterClass CharacterClassCharacter [CharacterClassCharacter]
-  | Subpattern [RegexCharacter]
-  deriving (Eq, Generic, Show)
+  | Subpattern Pattern
+  deriving (Data, Eq, Show)
 
 data MetaCharacter
   = ZeroOrMore Quantifiable
   | OneOrMore Quantifiable
   | MinMax Quantifiable (PositiveOrderedRange Int)
-  deriving (Eq, Generic, Show)
+  deriving (Data, Eq, Generic, Show)
 
 data CharacterClassCharacter
   = ClassLiteral Char
   | ClassRange (OrderedRange Char)
   | QuotedClassLiterals String
-  deriving (Eq, Generic, Show)
+  deriving (Data, Eq, Generic, Show)
 
 data BackslashSequence
   = Nonalphanumeric Char
@@ -99,13 +119,20 @@ data BackslashSequence
   | NotVerticalWhiteSpace
   | WordCharacter
   | NonWordCharacter
-  deriving (Eq, Show)
+  deriving (Data, Eq, Show)
 
 data OrderedRange a = OrderedRange a a
-  deriving (Eq, Show)
+  deriving (Data, Eq, Show)
 
 newtype PositiveOrderedRange a = PositiveOrderedRange (OrderedRange a)
-  deriving (Eq, Generic, Show)
+  deriving (Data, Eq, Generic, Show)
+
+class SubpatternContainer a where
+  numSubpatterns :: a -> Int
+  numSubpatterns = length . subpatterns
+
+  subpatterns :: a -> [Quantifiable]
+  resolveBackreferences :: Regex -> a -> Either String a
 
 orderedRange :: (Ord a) => a -> a -> Maybe (OrderedRange a)
 orderedRange c d
@@ -127,13 +154,23 @@ instance ToJSON Regex where
 instance Arbitrary Regex where
   arbitrary =
     oneof
-      [ Regex <$> ((:) <$> arbitrary <*> arbitrary),
-        Alternative <$> arbitrary <*> arbitrary <*> arbitrary,
-        StartOfString <$> ((:) <$> arbitrary <*> arbitrary),
-        EndOfString <$> ((:) <$> arbitrary <*> arbitrary),
-        StartAndEndOfString <$> ((:) <$> arbitrary <*> arbitrary)
+      [ Regex <$> arbitrary,
+        StartOfString <$> arbitrary,
+        EndOfString <$> arbitrary,
+        StartAndEndOfString <$> arbitrary
       ]
   shrink = genericShrink
+
+instance Arbitrary Pattern where
+  arbitrary =
+    oneof
+      [Alternative <$> listOf1 arbitrary <*> arbitrary]
+
+instance Plated Regex where
+  plate = uniplate
+
+instance Plated Quantifiable where
+  plate = uniplate
 
 instance Arbitrary RegexCharacter where
   arbitrary =
@@ -161,13 +198,14 @@ instance Arbitrary Quantifiable where
           oneof
             [ pure AnyCharacter,
               Character <$> regexChars,
-              -- , Backslash <$> arbitrary
+              Backslash <$> arbitrary,
               CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- CharacterClass must have at least one element
               NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- NegatedCharacterClass must have at least one element
-              fmap Subpattern arbitrary
+              Subpattern <$> arbitrary
             ]
       quant' _ = pure AnyCharacter
-  shrink = genericShrink
+
+-- shrink = genericShrink
 
 instance Arbitrary MetaCharacter where
   arbitrary =
@@ -253,4 +291,168 @@ inCharacterClassCharacter c (ClassRange r) =
   c >= a && c <= b
   where
     (a, b) = extractRange r
-inCharacterClassCharacter c (QuotedClassLiterals q) = any (\l -> c == l) q
+inCharacterClassCharacter c (QuotedClassLiterals q) = c `elem` q
+
+instance SubpatternContainer Regex where
+  subpatterns (Regex reChars) = subpatterns reChars
+  subpatterns (StartOfString reChars) = subpatterns reChars
+  subpatterns (EndOfString reChars) = subpatterns reChars
+  subpatterns (StartAndEndOfString reChars) = subpatterns reChars
+
+  resolveBackreferences re (Regex reChars) =
+    Regex <$> resolveBackreferences re reChars
+  resolveBackreferences re (StartOfString reChars) =
+    StartOfString <$> resolveBackreferences re reChars
+  resolveBackreferences re (EndOfString reChars) =
+    EndOfString <$> resolveBackreferences re reChars
+  resolveBackreferences re (StartAndEndOfString reChars) =
+    StartAndEndOfString <$> resolveBackreferences re reChars
+
+instance SubpatternContainer Pattern where
+  subpatterns (Alternative x xs) = concatMap subpatterns (x : xs)
+  resolveBackreferences re (Alternative x xs) = do
+    x' <- resolveBackreferences re x
+    xs' <- mapM (resolveBackreferences re) xs
+    return $ Alternative x' xs'
+
+instance SubpatternContainer [RegexCharacter] where
+  subpatterns = concatMap subpatterns
+
+  resolveBackreferences re = mapM (resolveBackreferences re)
+
+instance SubpatternContainer RegexCharacter where
+  subpatterns (Quant q) = subpatterns q
+  subpatterns (Meta m) = subpatterns m
+  subpatterns (Quoted _) = []
+
+  resolveBackreferences re (Quant q) = Quant <$> resolveBackreferences re q
+  resolveBackreferences re (Meta m) = Meta <$> resolveBackreferences re m
+  resolveBackreferences _ self@(Quoted _) = Right self
+
+instance SubpatternContainer MetaCharacter where
+  subpatterns (ZeroOrMore q) = subpatterns q
+  subpatterns (OneOrMore q) = subpatterns q
+  subpatterns (MinMax q _) = subpatterns q
+
+  resolveBackreferences re (ZeroOrMore q) = ZeroOrMore <$> resolveBackreferences re q
+  resolveBackreferences re (OneOrMore q) = OneOrMore <$> resolveBackreferences re q
+  resolveBackreferences re (MinMax q r) = MinMax <$> resolveBackreferences re q <*> pure r
+
+instance SubpatternContainer Quantifiable where
+  subpatterns AnyCharacter = []
+  subpatterns (Character _) = []
+  subpatterns (AmbiguousNumberSequence _) = []
+  subpatterns (Backslash _) = []
+  subpatterns (BackReference _ _) = []
+  subpatterns (CharacterClass _ _) = []
+  subpatterns (NegatedCharacterClass _ _) = []
+  subpatterns self@(Subpattern reChars) = self : subpatterns reChars
+
+  resolveBackreferences _ self@AnyCharacter = pure self
+  resolveBackreferences _ self@(Character _) = pure self
+  resolveBackreferences _ self@(Backslash _) = pure self
+  resolveBackreferences _ self@(BackReference _ _) = pure self
+  resolveBackreferences _ self@(CharacterClass _ _) = pure self
+  resolveBackreferences _ self@(NegatedCharacterClass _ _) = pure self
+  resolveBackreferences re (Subpattern reChars) = Subpattern <$> resolveBackreferences re reChars
+  resolveBackreferences re (AmbiguousNumberSequence str) =
+    case maybeBackref str of
+      Nothing -> asBackslash str
+      Just a -> Right a
+    where
+      maybeBackref :: String -> Maybe Quantifiable
+      maybeBackref backRefStr = do
+        patternIndex <- readMaybe backRefStr
+        subpattern <- subpatterns re ^? element (patternIndex - 1)
+        case subpattern of
+          Subpattern s -> return $ BackReference patternIndex s
+          _ -> mzero
+      asBackslash :: String -> Either String Quantifiable
+      asBackslash backlashStr = over _Left show . parse backslashSequence "" $ ("\\" <> backlashStr)
+
+backslashSequence :: GenParser Char st Quantifiable
+backslashSequence =
+  Backslash
+    <$> ( string "\\"
+            *> ( try (string "^" $> Caret)
+                   <|> try (string "$" $> Dollar)
+                   <|> try (string "." $> Dot)
+                   <|> try (string "[" $> OpenSquareBracket)
+                   <|> try (string "|" $> Pipe)
+                   <|> try (string "(" $> OpenParens)
+                   <|> try (string ")" $> CloseParens)
+                   <|> try (string "?" $> QuestionMark)
+                   <|> try (string "*" $> Asterisk)
+                   <|> try (string "+" $> Plus)
+                   <|> try (string "{" $> OpenBrace)
+                   <|> try (string "-" $> Hyphen)
+                   <|> try (string "]" $> CloseSquareBracket)
+                   <|> try (string "a" $> NonprintingAlarm)
+                   <|> try (NonprintingCtrlx <$> (string "c" *> anyChar))
+                   <|> try (string "e" $> NonprintingEscape)
+                   <|> try (string "f" $> NonprintingFormFeed)
+                   <|> try (string "n" $> NonprintingLineFeed)
+                   <|> try (string "r" $> NonprintingCarriageReturn)
+                   <|> try (string "t" $> NonprintingTab)
+                   <|> try
+                     ( do
+                         octText <-
+                           try (count 3 octDigit)
+                             <|> try (count 2 octDigit)
+                             <|> try (count 1 octDigit)
+                         let (octValue, _) = head . readOct $ octText
+                         return . NonprintingOctalCode $ octValue
+                     )
+                   <|> try
+                     ( do
+                         _ <- string "o{"
+                         octText <- many1 octDigit
+                         let (octValue, _) = head . readOct $ octText
+                         _ <- string "}"
+                         return . NonprintingOctalCodeBraces $ octValue
+                     )
+                   <|> try
+                     ( do
+                         _ <- string "x{"
+                         hexText <- many1 hexDigit
+                         let (hexValue, _) = head . readHex $ hexText
+                         _ <- string "}"
+                         return . NonprintingHexCodeBraces $ hexValue
+                     )
+                   <|> try
+                     ( do
+                         _ <- string "x"
+                         hexText <-
+                           try (count 2 hexDigit)
+                             <|> try (count 1 hexDigit)
+                         let hexParse = readHex hexText
+                         return . NonprintingHexCode $
+                           case hexParse of
+                             [] -> 0 :: Int
+                             (val, _) : _ -> val
+                     )
+                   <|> try (string "x" $> NonprintingHexZero)
+                   <|> try
+                     ( do
+                         _ <- string "x{"
+                         hexText <-
+                           try (count 2 hexDigit)
+                             <|> try (count 1 hexDigit)
+                         _ <- string "}"
+                         let (hexValue, _) = head . readHex $ hexText
+                         return . NonprintingHexCodeBraces $ hexValue
+                     )
+                   <|> try (string "d" $> Digit)
+                   <|> try (string "D" $> NonDigit)
+                   <|> try (string "h" $> HorizontalWhiteSpace)
+                   <|> try (string "H" $> NotHorizontalWhiteSpace)
+                   <|> try (string "s" $> WhiteSpace)
+                   <|> try (string "S" $> NotWhiteSpace)
+                   <|> try (string "v" $> VerticalWhiteSpace)
+                   <|> try (string "V" $> NotVerticalWhiteSpace)
+                   <|> try (string "w" $> WordCharacter)
+                   <|> try (string "W" $> NonWordCharacter)
+                   <|> try (string "\\" $> BackslashChar)
+                   <|> try (Nonalphanumeric <$> satisfy (not . isAlphaNum))
+               )
+        )

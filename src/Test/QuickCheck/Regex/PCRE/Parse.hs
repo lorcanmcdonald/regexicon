@@ -2,35 +2,46 @@
 
 module Test.QuickCheck.Regex.PCRE.Parse (parseRegex) where
 
-import Data.Char
+import Control.Lens.Combinators (_Left, over)
 import Data.Default
-import Data.Functor (($>))
-import Numeric (readHex, readOct)
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
 
-parseRegex :: String -> Either ParseError Regex
-parseRegex = parse (regex <* eof) "(unknown)"
-
+parseRegex :: String -> Either String Regex
+parseRegex s = do
+  re <-  over _Left show . parse (regex <* eof) "(unknown)" $ s
+  resolveBackreferences re re
+    
 regex :: GenParser Char st Regex
 regex =
-  try (StartOfString <$> (string "^" *> many1 regexCharacter))
-    <|> try (EndOfString <$> (many1 regexCharacter <* string "$"))
-    <|> try (StartAndEndOfString <$> (string "^" *> (many regexCharacter <* string "$")))
-    <|> try
-      ( Alternative
-          <$> (many1 regexCharacter <* string "|")
-          <*> (many1 regexCharacter <* string "|")
-          <*> (many1 regexCharacter `sepBy` string "|")
-      )
-    <|> try
-      ( Alternative
-          <$> (many1 regexCharacter <* string "|")
-          <*> many1 regexCharacter
-          <*> return []
-      )
-    <|> try (Regex <$> many1 regexCharacter)
+  try (StartOfString <$> (string "^" *> rePattern))
+    <|> try (EndOfString <$> (rePattern <* string "$"))
+    <|> try (StartAndEndOfString <$> (string "^" *> (rePattern <* string "$")))
+    <|> try (Regex <$> rePattern)
     <?> "regex"
+
+rePattern :: GenParser Char st Pattern
+rePattern =
+  try
+    ( Alternative
+        <$> (many1 regexCharacter <* string "|")
+        <*> many1 regexCharacter `sepBy1` string "|"
+    )
+    <|> try (Alternative <$> many1 regexCharacter <*> pure [])
+      -- many1
+      -- try
+      --   ( Alternative
+      --       <$> (many1 regexCharacter <* string "|")
+      --       <*> (many1 regexCharacter <* string "|")
+      --       <*> (many1 regexCharacter `sepBy` string "|")
+      --   )
+      --   <|> try
+      --     ( Alternative
+      --         <$> (many1 regexCharacter <* string "|")
+      --         <*> many1 regexCharacter
+      --         <*> return []
+      --     )
+      <?> "rePattern"
 
 regexCharacter :: GenParser Char st RegexCharacter
 regexCharacter =
@@ -83,6 +94,7 @@ positiveIntRange = constrainedRange positiveOrderedRange
 quantifiable :: GenParser Char st Quantifiable
 quantifiable =
   try subpattern
+    <|> try ambiguousNumberSequence
     <|> try backslashSequence
     <|> try negatedCharacterClass
     <|> try characterClass
@@ -92,95 +104,20 @@ quantifiable =
 
 subpattern :: GenParser Char st Quantifiable
 subpattern =
-  Subpattern <$> (string "(" *> many1 regexCharacter <* string ")")
-    <?> "Subpattern"
+  try
+    ( Subpattern
+        <$> (string "(" *> rePattern <* string ")")
+    )
+    <|> try
+      ( Subpattern
+          <$> (string "()" *> (pure $ Alternative [] []))
+      )
+      <?> "Subpattern"
 
-backslashSequence :: GenParser Char st Quantifiable
-backslashSequence =
-  Backslash
-    <$> ( string "\\"
-            *> ( try (string "^" $> Caret)
-                   <|> try (string "$" $> Dollar)
-                   <|> try (string "." $> Dot)
-                   <|> try (string "[" $> OpenSquareBracket)
-                   <|> try (string "|" $> Pipe)
-                   <|> try (string "(" $> OpenParens)
-                   <|> try (string ")" $> CloseParens)
-                   <|> try (string "?" $> QuestionMark)
-                   <|> try (string "*" $> Asterisk)
-                   <|> try (string "+" $> Plus)
-                   <|> try (string "{" $> OpenBrace)
-                   <|> try (string "-" $> Hyphen)
-                   <|> try (string "]" $> CloseSquareBracket)
-                   <|> try (string "a" $> NonprintingAlarm)
-                   <|> try (NonprintingCtrlx <$> (string "c" *> anyChar))
-                   <|> try (string "e" $> NonprintingEscape)
-                   <|> try (string "f" $> NonprintingFormFeed)
-                   <|> try (string "n" $> NonprintingLineFeed)
-                   <|> try (string "r" $> NonprintingCarriageReturn)
-                   <|> try (string "t" $> NonprintingTab)
-                   <|> try
-                     ( do
-                         octText <-
-                           try (count 3 octDigit)
-                             <|> try (count 2 octDigit)
-                             <|> try (count 1 octDigit)
-                         let (octValue, _) = head . readOct $ octText
-                         return . NonprintingOctalCode $ octValue
-                     )
-                   <|> try
-                     ( do
-                         _ <- string "o{"
-                         octText <- many1 octDigit
-                         let (octValue, _) = head . readOct $ octText
-                         _ <- string "}"
-                         return . NonprintingOctalCodeBraces $ octValue
-                     )
-                   <|> try
-                     ( do
-                         _ <- string "x{"
-                         hexText <- many1 hexDigit
-                         let (hexValue, _) = head . readHex $ hexText
-                         _ <- string "}"
-                         return . NonprintingHexCodeBraces $ hexValue
-                     )
-                   <|> try
-                     ( do
-                         _ <- string "x"
-                         hexText <-
-                           try (count 2 hexDigit)
-                             <|> try (count 1 hexDigit)
-                         let hexParse = readHex hexText
-                         return . NonprintingHexCode $
-                           case hexParse of
-                             [] -> 0 :: Int
-                             (val, _) : _ -> val
-                     )
-                   <|> try (string "x" $> NonprintingHexZero)
-                   <|> try
-                     ( do
-                         _ <- string "x{"
-                         hexText <-
-                           try (count 2 hexDigit)
-                             <|> try (count 1 hexDigit)
-                         _ <- string "}"
-                         let (hexValue, _) = head . readHex $ hexText
-                         return . NonprintingHexCodeBraces $ hexValue
-                     )
-                   <|> try (string "d" $> Digit)
-                   <|> try (string "D" $> NonDigit)
-                   <|> try (string "h" $> HorizontalWhiteSpace)
-                   <|> try (string "H" $> NotHorizontalWhiteSpace)
-                   <|> try (string "s" $> WhiteSpace)
-                   <|> try (string "S" $> NotWhiteSpace)
-                   <|> try (string "v" $> VerticalWhiteSpace)
-                   <|> try (string "V" $> NotVerticalWhiteSpace)
-                   <|> try (string "w" $> WordCharacter)
-                   <|> try (string "W" $> NonWordCharacter)
-                   <|> try (string "\\" $> BackslashChar)
-                   <|> try (Nonalphanumeric <$> satisfy (not . isAlphaNum))
-               )
-        )
+ambiguousNumberSequence :: GenParser Char st Quantifiable
+ambiguousNumberSequence =
+  try (AmbiguousNumberSequence <$> (string "\\" *> many1 digit))
+    <?> "octal or backreference number sequence"
 
 characterClass :: GenParser Char st Quantifiable
 characterClass =
