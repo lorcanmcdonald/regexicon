@@ -4,9 +4,9 @@ module Test.QuickCheck.Regex.PCRE.Parse (parseRegex) where
 
 import Control.Lens.Combinators (_Left, over)
 import Data.Default
+import Data.Functor (($>))
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
-import Data.Functor (($>))
 
 parseRegex :: String -> Either String Regex
 parseRegex s = do
@@ -60,7 +60,7 @@ constrainedRange constructor =
         _ <- string "{"
         a <- many1 digit
         _ <- string "}"
-        case constructor def (read a) of
+        case constructor (read a) (read a) of
           Just range -> return range
           Nothing -> fail "Could not create ordered range"
     )

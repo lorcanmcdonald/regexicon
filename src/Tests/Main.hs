@@ -30,7 +30,12 @@ tests =
       testGroup
         "Matching"
         [ testCase "\\d" test_matching_digit,
-          testCase "(a(b))\\2\\1" test_matching_backreference
+          testCase
+            "(a(b))\\2\\1"
+            test_matching_backreference,
+          testCase
+            "[0-9a-f]{32}"
+            test_length_of_range
         ]
     ]
 
@@ -406,7 +411,7 @@ test_website_example =
                             [ ClassRange (fromJust . orderedRange 'a' $ 'f')
                             ]
                         )
-                        (fromJust . positiveOrderedRange 0 $ 32)
+                        (fromJust . positiveOrderedRange 32 $ 32)
                     )
                 ]
                 []
@@ -468,6 +473,14 @@ test_matching_backreference = do
     "did not generate the correct example for a back reference"
     "abbab"
     (head only_example)
+
+test_length_of_range :: Assertion
+test_length_of_range = do
+  let regex = fromRight (Regex (Alternative [] [])) . parseRegex $ "[0-9a-f]{32}"
+  rangeExample <- replicateM 10 . generate . matching $ regex
+  assertBool
+    "Produced an example which was not the specified length"
+    (all ((== 32) . length) rangeExample)
 
 test_render_quotedclassliterals :: Assertion
 test_render_quotedclassliterals =
