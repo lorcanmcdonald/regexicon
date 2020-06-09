@@ -88,18 +88,20 @@ parseTests =
         testCase "a(b)" test_subpattern,
         testCase "a*" test_zero_or_more,
         testCase
+          "[\\d]"
+          ("\\d" `shouldBe` Regex (Alternative [Quant (Backslash Digit)] [])),
+        testCase
           "(a|b)"
           ( "(a|b)"
               `shouldBe` Regex
                 ( Alternative
                     [ Quant
                         ( Subpattern
-                             ( Alternative
-                                  [Quant (Character 'a')]
-                                  [ [Quant (Character 'b')]
-                                  ]
-                              )
-                            
+                            ( Alternative
+                                [Quant (Character 'a')]
+                                [ [Quant (Character 'b')]
+                                ]
+                            )
                         )
                     ]
                     []
