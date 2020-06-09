@@ -169,6 +169,30 @@ parseTests =
           "\\013"
           ("\\013" `shouldBe` Regex (Alternative [Quant (Backslash (NonprintingOctalCode 11))] [])),
         testCase
+          "\\11"
+          ("\\11" `shouldBe` Regex (Alternative [Quant (Backslash (NonprintingOctalCode 9))] [])),
+        testCase
+          "()()()()()()()()()()()\\11"
+          ( "()()()()()()()()()()()\\11"
+              `shouldBe` Regex
+                ( Alternative
+                    [ Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (Subpattern (Alternative [] [])),
+                      Quant (BackReference 11 (Alternative [] []))
+                    ]
+                    []
+                )
+          ),
+        testCase
           "\\113"
           ("\\113" `shouldBe` Regex (Alternative [Quant (Backslash (NonprintingOctalCode 75))] [])),
         testCase
@@ -198,6 +222,9 @@ parseTests =
       [ testCase "empty string" test_empty,
         testCase "*" test_invalid_pattern,
         testCase
+          "\\7"
+          test_invalid_backref_cannot_be_octal,
+        testCase
           "[]"
           test_empty_character_class,
         testCase
@@ -211,8 +238,8 @@ parseTests =
           "transitive example: a|a. "
           (isTransitive "a|a."),
         testCase
-          "transitive example: a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:"
-          (isTransitive "a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:"),
+          "transitive example: a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:\\1\\x0"
+          (isTransitive "a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:\\1\\x0"),
         testCase
           "transitive example: \\x"
           (isTransitive "\\x"),
@@ -224,6 +251,14 @@ parseTests =
 
 test_empty :: Assertion
 test_empty = assertBool "Empty pattern doesn't fail" . isLeft . parseRegex $ ""
+
+test_invalid_backref_cannot_be_octal :: Assertion
+test_invalid_backref_cannot_be_octal =
+  assertBool
+    "Referencing a non-existent back ref should fail (\\x where x < 8 should not be interpreted as octal)"
+    . isLeft
+    . parseRegex
+    $ "\\7"
 
 test_single_char :: Assertion
 test_single_char =

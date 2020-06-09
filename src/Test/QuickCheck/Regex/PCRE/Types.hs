@@ -399,7 +399,7 @@ backslashSequence =
                          octText <-
                            try (count 3 octDigit)
                              <|> try (count 2 octDigit)
-                             <|> try (count 1 octDigit)
+                             <|> try (string "0") -- PCRE spec implies that \8 and \9 could be interpreted as octals, but `perl` does not
                          let (octValue, _) = head . readOct $ octText
                          return . NonprintingOctalCode $ octValue
                      )
