@@ -6,12 +6,13 @@ import Control.Lens.Combinators (_Left, over)
 import Data.Default
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
+import Data.Functor (($>))
 
 parseRegex :: String -> Either String Regex
 parseRegex s = do
-  re <-  over _Left show . parse (regex <* eof) "(unknown)" $ s
+  re <- over _Left show . parse (regex <* eof) "(unknown)" $ s
   resolveBackreferences re re
-    
+
 regex :: GenParser Char st Regex
 regex =
   try (StartOfString <$> (string "^" *> rePattern))
@@ -28,19 +29,6 @@ rePattern =
         <*> many1 regexCharacter `sepBy1` string "|"
     )
     <|> try (Alternative <$> many1 regexCharacter <*> pure [])
-      -- many1
-      -- try
-      --   ( Alternative
-      --       <$> (many1 regexCharacter <* string "|")
-      --       <*> (many1 regexCharacter <* string "|")
-      --       <*> (many1 regexCharacter `sepBy` string "|")
-      --   )
-      --   <|> try
-      --     ( Alternative
-      --         <$> (many1 regexCharacter <* string "|")
-      --         <*> many1 regexCharacter
-      --         <*> return []
-      --     )
       <?> "rePattern"
 
 regexCharacter :: GenParser Char st RegexCharacter
@@ -110,7 +98,7 @@ subpattern =
     )
     <|> try
       ( Subpattern
-          <$> (string "()" *> (pure $ Alternative [] []))
+          <$> (string "()" $> Alternative [] [])
       )
       <?> "Subpattern"
 
