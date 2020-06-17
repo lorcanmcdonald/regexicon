@@ -139,7 +139,7 @@ instance Exemplify BackslashSequence where
   examples (NonprintingOctalCodeZero c) = pure [chr c]
   examples (NonprintingOctalCode c) = pure [chr c]
   examples (NonprintingOctalCodeBraces c) = pure [chr c]
-  examples NonprintingHexZero = pure ([chr 0])
+  examples NonprintingHexZero = pure [chr 0]
   examples (NonprintingHexCode c) = pure [chr c]
   examples (NonprintingHexCodeBraces c) = pure [chr c]
   examples Digit =
