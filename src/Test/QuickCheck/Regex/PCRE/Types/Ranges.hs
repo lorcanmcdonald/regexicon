@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Test.QuickCheck.Regex.PCRE.Types.Ranges
   ( OrderedRange,
@@ -12,14 +11,13 @@ module Test.QuickCheck.Regex.PCRE.Types.Ranges
 where
 
 import Data.Data
-import GHC.Generics
 import Test.QuickCheck
 
 data OrderedRange a = OrderedRange a a
-  deriving (Data, Eq, Generic, Show)
+  deriving (Data, Eq, Show)
 
 newtype PositiveOrderedRange a = PositiveOrderedRange (OrderedRange a)
-  deriving (Data, Eq, Generic, Show)
+  deriving (Data, Eq, Show)
 
 orderedRange :: (Ord a) => a -> a -> Maybe (OrderedRange a)
 orderedRange c d
@@ -49,7 +47,7 @@ instance (Arbitrary a, Ord a) => Arbitrary (OrderedRange a) where
       if a <= b
         then return (OrderedRange a b)
         else return (OrderedRange b a)
-  shrink = genericShrink
+  shrink _ = []
 
 instance (Arbitrary a, Num a, Ord a) => Arbitrary (PositiveOrderedRange a) where
   arbitrary =
@@ -64,4 +62,4 @@ instance (Arbitrary a, Num a, Ord a) => Arbitrary (PositiveOrderedRange a) where
         Just r -> return r
         Nothing ->
           error "Tried to generate an invalid Arbitrary PositiveOrderedRange a"
-  shrink = genericShrink
+  shrink _ = []

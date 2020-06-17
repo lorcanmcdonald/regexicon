@@ -32,7 +32,7 @@ instance Exemplify CharacterClassCharacter where
   examples (ClassLiteral c) = elements [[c]]
   examples (ClassRange r) =
     fmap (: "") . choose $ extractRange r
-  examples (QuotedClassLiterals c s) = pure (c : s)
+  examples (QuotedClassLiterals c s) = oneof $ pure . (: []) <$> (c : s)
   examples (ClassBackslash s) = examples s
 
 instance Arbitrary CharacterClassCharacter where
@@ -40,22 +40,27 @@ instance Arbitrary CharacterClassCharacter where
     oneof
       [ ClassLiteral <$> regexChars,
         -- ClassRange <$> arbitrary, -- Takes a long time to calculate :-/ (probably not specialised for characters)
+
+        -- QuotedClassLiterals do not seem to be parsed as I understand in
+        -- PCRE3, avoiding generating them for now
         -- QuotedClassLiterals
         --   <$> arbitraryASCIIChar
-        --   <*> (getASCIIString <$> printable) `suchThat` (not . null),
+        --     `suchThat` ( \c ->
+        --                    ord c > 31
+        --                )
+        --   <*> (getASCIIString <$> (arbitrary :: Gen ASCIIString))
+        --     `suchThat` ( \x ->
+        --                    (not . null $ x)
+        --                      && all (\c -> ord c > 31 && ord c /= 45) x
+        --                ),
         ClassBackslash <$> arbitrary
       ]
 
-  --     where
-  --       printable :: Gen ASCIIString
-  --       printable = arbitrary
-
-  shrink (ClassLiteral c) = ClassLiteral <$> shrink c
+  shrink (ClassLiteral _) = []
   shrink (ClassRange range) = ClassRange <$> shrink range
   shrink (QuotedClassLiterals _ []) = []
-  shrink (QuotedClassLiterals c _) =
-    [QuotedClassLiterals c []]
-  -- <> (QuotedClassLiterals c <$> shrink s)
+  shrink (QuotedClassLiterals c s) =
+    QuotedClassLiterals <$> shrink c <*> shrink s
   shrink (ClassBackslash s) = ClassBackslash <$> shrink s
 
 regexChars :: Gen Char
@@ -111,7 +116,7 @@ instance Arbitrary ClassBackslashSequence where
       [ pure CCHyphen,
         pure CCDigit
       ]
-  shrink = error "ClassBackslashSequence shrink"
+  shrink _ = []
 
 instance Exemplify ClassBackslashSequence where
   examples CCHyphen = pure "-"

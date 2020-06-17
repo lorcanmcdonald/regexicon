@@ -64,15 +64,13 @@ instance Arbitrary Quantifiable where
             ]
       quant' _ = pure AnyCharacter
 
-  shrink AnyCharacter = [AnyCharacter]
-  shrink (Character c) = Character <$> ['a', '\11', c]
+  shrink AnyCharacter = []
+  shrink (Character _) = []
   shrink self@(AmbiguousNumberSequence _) = [self]
   shrink (Backslash s) = Backslash <$> shrink s
   shrink (CharacterClass _ []) = []
   shrink (CharacterClass x xs) =
-    [CharacterClass x []]
-      <> ((`CharacterClass` []) <$> shrink x)
-      <> map (`CharacterClass` []) xs
+    (\(a : as) -> CharacterClass a as) <$> shrink (x : xs)
   shrink (NegatedCharacterClass _ []) = []
   shrink (NegatedCharacterClass x xs) =
     [NegatedCharacterClass x []]

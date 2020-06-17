@@ -100,7 +100,8 @@ instance Arbitrary BackslashSequence where
       octalLiteral =
         NonprintingHexCodeBraces <$> arbitrary `suchThat` (> 9)
 
-  shrink = error "nonalphanumeric has invarients which genericShrink does not maintain"
+  
+  shrink _ = []
 
 nonalphanumeric :: Gen Char
 nonalphanumeric =
