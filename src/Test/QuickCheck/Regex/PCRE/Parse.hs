@@ -10,7 +10,7 @@ import Text.ParserCombinators.Parsec
 
 parseRegex :: String -> Either String Regex
 parseRegex s = do
-  re <- over _Left show . parse (regex <* eof) "(unknown)" $ s
+  re <- over _Left show . parse (regex <* eof) ("input: " <> s) $ s
   resolveBackreferences re re
 
 regex :: GenParser Char st Regex
@@ -43,12 +43,12 @@ character =
   Character <$> noneOf "\\^$.[|()?*+{"
     <?> "character"
 
-metacharacter :: GenParser Char st MetaCharacter
+metacharacter :: GenParser Char st Metacharacter
 metacharacter =
   try (ZeroOrMore <$> quantifiable <* string "*")
     <|> try (OneOrMore <$> quantifiable <* string "+")
     <|> try (MinMax <$> quantifiable <*> positiveIntRange)
-    <?> "MetaCharacter"
+    <?> "meta character"
 
 constrainedRange ::
   (Ord a, Read a, Default a) =>
@@ -120,20 +120,3 @@ negatedCharacterClass =
     <$> (string "[^" *> characterClassCharacters)
     <*> (many characterClassCharacters <* string "]")
     <?> "NegatedCharacterClass"
-
-characterClassCharacters :: GenParser Char st CharacterClassCharacter
-characterClassCharacters =
-  try
-    ( do
-        a <- validChars
-        _ <- string "-"
-        b <- validChars
-        case orderedRange a b of
-          Just range -> return $ ClassRange range
-          Nothing -> fail "Range out of order in charcter class"
-    )
-    <|> try (ClassLiteral <$> validChars)
-    <|> try (QuotedClassLiterals <$> (string "\\Q" *> manyTill anyChar (try (string "\\E"))))
-    <?> "CharacterClassCharacter"
-  where
-    validChars = noneOf "\\^[]-"

@@ -20,10 +20,20 @@ library
   exposed-modules:
     Matching
     Matching.Server.Views
+    Test.QuickCheck.Regex.Exemplify
     Test.QuickCheck.Regex.PCRE
     Test.QuickCheck.Regex.PCRE.Parse
+    Test.QuickCheck.Regex.PCRE.RegexRenderer
     Test.QuickCheck.Regex.PCRE.Render
     Test.QuickCheck.Regex.PCRE.Types
+    Test.QuickCheck.Regex.PCRE.Types.Backslashes
+    Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+    Test.QuickCheck.Regex.PCRE.Types.Metacharacters
+    Test.QuickCheck.Regex.PCRE.Types.Pattern
+    Test.QuickCheck.Regex.PCRE.Types.Regex
+    Test.QuickCheck.Regex.PCRE.Types.Quantifiable
+    Test.QuickCheck.Regex.PCRE.Types.Ranges
+    Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
   build-depends:       QuickCheck
                      , aeson
                      , base >=4.6
@@ -66,16 +76,37 @@ Test-suite test-matching
   type: exitcode-stdio-1.0
   Main-is: Main.hs
   other-modules:       
+      Test.QuickCheck.Regex.Exemplify
       Test.QuickCheck.Regex.PCRE
       Test.QuickCheck.Regex.PCRE.Parse
+      Test.QuickCheck.Regex.PCRE.RegexRenderer
       Test.QuickCheck.Regex.PCRE.Render
       Test.QuickCheck.Regex.PCRE.Types
+      Test.QuickCheck.Regex.PCRE.Types.Backslashes
+      Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+      Test.QuickCheck.Regex.PCRE.Types.Metacharacters
+      Test.QuickCheck.Regex.PCRE.Types.Pattern
+      Test.QuickCheck.Regex.PCRE.Types.Quantifiable
+      Test.QuickCheck.Regex.PCRE.Types.Ranges
+      Test.QuickCheck.Regex.PCRE.Types.Regex
+      Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
 
   autogen-modules:       
+      Test.QuickCheck.Regex.Exemplify
       Test.QuickCheck.Regex.PCRE
       Test.QuickCheck.Regex.PCRE.Parse
+      Test.QuickCheck.Regex.PCRE.RegexRenderer
       Test.QuickCheck.Regex.PCRE.Render
       Test.QuickCheck.Regex.PCRE.Types
+      Test.QuickCheck.Regex.PCRE.Types.Backslashes
+      Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+      Test.QuickCheck.Regex.PCRE.Types.Metacharacters
+      Test.QuickCheck.Regex.PCRE.Types.Pattern
+      Test.QuickCheck.Regex.PCRE.Types.Quantifiable
+      Test.QuickCheck.Regex.PCRE.Types.Ranges
+      Test.QuickCheck.Regex.PCRE.Types.Regex
+      Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
+
 
   ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
   Build-depends: QuickCheck
