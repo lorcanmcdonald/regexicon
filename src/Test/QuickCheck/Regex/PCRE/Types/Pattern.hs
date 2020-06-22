@@ -24,10 +24,10 @@ instance Arbitrary Pattern where
   shrink (Alternative c []) = (`Alternative` []) <$> shrink c
   shrink (Alternative x xs) =
     [Alternative x []]
-      <> ( map (`Alternative` [])
-             $ concat . shrink
-             $ (x : xs)
-         )
+      <> map (`Alternative` [])
+        ( concat . shrink $
+            (x : xs)
+        )
 
 instance Exemplify Pattern where
   examples (Alternative x xs) = oneof . map examples $ x : xs
