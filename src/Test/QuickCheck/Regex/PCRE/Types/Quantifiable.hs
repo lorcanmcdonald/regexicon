@@ -153,7 +153,12 @@ backslashSequence =
                              [] -> 0 :: Int
                              (val, _) : _ -> val
                      )
-                   -- <|> try (string "x" $> NonprintingHexZero)
+                   <|> try
+                     ( do
+                         _ <- string "x"
+                         _ <- notFollowedBy (string "{")
+                         pure NonprintingHexZero
+                     )
                    <|> try
                      ( do
                          _ <- string "x{"

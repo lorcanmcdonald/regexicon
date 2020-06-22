@@ -73,7 +73,7 @@ instance Arbitrary BackslashSequence where
         pure NonprintingLineFeed,
         pure NonprintingCarriageReturn,
         pure NonprintingTab,
-        -- pure NonprintingHexZero,
+        pure NonprintingHexZero,
         octalLiteral,
         octalOrHexLiteral =<< arbitrary,
         pure Digit,

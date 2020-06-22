@@ -162,7 +162,10 @@ parseTests =
           test_empty_character_class,
         testCase
           "|a"
-          test_empty_first_alternative
+          test_empty_first_alternative,
+        testCase
+          "\\x{1,2}"
+          test_hexZero_unquantifiable
       ],
     testGroup
       "Transitive properties"
@@ -181,6 +184,10 @@ parseTests =
           (isTransitive "\\x0")
       ]
   ]
+
+bigBackslashPattern :: String
+bigBackslashPattern =
+  "\\&\\\\\\^\\$\\.\\[\\|\\(\\)\\?\\*\\+\\{\\-\\]\\a\\e\\f\\n\\r\\t\\0\\15\\o{15}\\xAF\\x{AF}\\d\\D\\h\\H\\v\\V\\w\\W"
 
 backslashPatterns :: [TestTree]
 backslashPatterns =
@@ -277,21 +284,66 @@ backslashPatterns =
       "\\xFF"
       ("\\xFF" `shouldBe` Regex (Alternative [Quant (Backslash (NonprintingHexCode 255))] [])),
     testCase
+      bigBackslashPattern
+      ( bigBackslashPattern
+          `shouldBe` Regex
+            ( Alternative
+                [ Quant (Backslash (Nonalphanumeric '&')),
+                  Quant (Backslash BackslashChar),
+                  Quant (Backslash Caret),
+                  Quant (Backslash Dollar),
+                  Quant (Backslash Dot),
+                  Quant (Backslash OpenSquareBracket),
+                  Quant (Backslash Pipe),
+                  Quant (Backslash OpenParens),
+                  Quant (Backslash CloseParens),
+                  Quant (Backslash QuestionMark),
+                  Quant (Backslash Asterisk),
+                  Quant (Backslash Plus),
+                  Quant (Backslash OpenBrace),
+                  Quant (Backslash Hyphen),
+                  Quant (Backslash CloseSquareBracket),
+                  Quant (Backslash NonprintingAlarm),
+                  Quant (Backslash NonprintingEscape),
+                  Quant (Backslash NonprintingFormFeed),
+                  Quant (Backslash NonprintingLineFeed),
+                  Quant (Backslash NonprintingCarriageReturn),
+                  Quant (Backslash NonprintingTab),
+                  Quant (Backslash (NonprintingOctalCode 0)),
+                  Quant (Backslash (NonprintingOctalCode 13)),
+                  Quant (Backslash (NonprintingOctalCodeBraces 13)),
+                  Quant (Backslash (NonprintingHexCode 175)),
+                  Quant (Backslash (NonprintingHexCodeBraces 175)),
+                  Quant (Backslash Digit),
+                  Quant (Backslash NonDigit),
+                  Quant (Backslash HorizontalWhiteSpace),
+                  Quant (Backslash NotHorizontalWhiteSpace),
+                  Quant (Backslash VerticalWhiteSpace),
+                  Quant (Backslash NotVerticalWhiteSpace),
+                  Quant (Backslash WordCharacter),
+                  Quant
+                    ( Backslash
+                        NonWordCharacter
+                    )
+                ]
+                []
+            )
+      ),
+    testCase
       "\\x{FF}"
-      ("\\x{FF}" `shouldBe` Regex (Alternative [Quant (Backslash (NonprintingHexCodeBraces 255))] []))
-      --,
-      -- testCase
-      --   "\\0\\x\\015"
-      --   ( "\\0\\x\\015"
-      --       `shouldBe` Regex
-      --         ( Alternative
-      --             [ Quant (Backslash (NonprintingOctalCode 0)),
-      --               -- Quant (Backslash NonprintingHexZero),
-      --               Quant (Backslash (NonprintingOctalCode 13))
-      --             ]
-      --             []
-      --         )
-      --   )
+      ("\\x{FF}" `shouldBe` Regex (Alternative [Quant (Backslash (NonprintingHexCodeBraces 255))] [])),
+    testCase
+      "\\0\\x\\015"
+      ( "\\0\\x\\015"
+          `shouldBe` Regex
+            ( Alternative
+                [ Quant (Backslash (NonprintingOctalCode 0)),
+                  Quant (Backslash NonprintingHexZero),
+                  Quant (Backslash (NonprintingOctalCode 13))
+                ]
+                []
+            )
+      )
   ]
 
 test_empty :: Assertion
@@ -367,6 +419,13 @@ test_empty_first_alternative =
     . isLeft
     . parseRegex
     $ "|a"
+
+test_hexZero_unquantifiable :: Assertion
+test_hexZero_unquantifiable =
+  assertBool "parsed `\\x{1,2}` but it is invalid according to PCRE"
+    . isLeft
+    . parseRegex
+    $ "\\x{1,2}"
 
 test_alternatives :: Assertion
 test_alternatives =

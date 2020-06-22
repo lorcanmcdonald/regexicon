@@ -5,6 +5,7 @@ import Data.Data
 import Test.QuickCheck
 import Test.QuickCheck.Regex.Exemplify
 import Test.QuickCheck.Regex.PCRE.RegexRenderer
+import Text.ParserCombinators.Parsec
 
 data Quantifiable
 
@@ -14,3 +15,5 @@ instance Eq Quantifiable
 instance Exemplify Quantifiable
 instance RegexRenderer Quantifiable
 instance Show Quantifiable
+
+backslashSequence :: GenParser Char st Quantifiable
