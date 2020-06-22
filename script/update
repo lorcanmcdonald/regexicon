@@ -55,5 +55,5 @@ run_node "./node_modules/.bin/webpack" \
 
 docker build \
   -t lorcan/regex-candidates \
-  --build-arg regex_user_id=$UID \
+  --build-arg GHC_VERSION=$GHC_VERSION \
   --file "$DIR/containers/service.Dockerfile" "$DIR"
