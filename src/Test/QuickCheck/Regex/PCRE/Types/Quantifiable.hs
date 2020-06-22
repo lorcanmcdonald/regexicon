@@ -70,7 +70,15 @@ instance Arbitrary Quantifiable where
   shrink (Backslash s) = Backslash <$> shrink s
   shrink (CharacterClass _ []) = []
   shrink (CharacterClass x xs) =
-    (\(a : as) -> CharacterClass a as) <$> shrink (x : xs)
+    let shrunk :: [[CharacterClassCharacter]]
+        shrunk = shrink (x : xs)
+     in map
+          ( \l ->
+              case l of
+                [] -> CharacterClass x []
+                (a : as) -> CharacterClass a as
+          )
+          shrunk
   shrink (NegatedCharacterClass _ []) = []
   shrink (NegatedCharacterClass x xs) =
     [NegatedCharacterClass x []]
