@@ -34,3 +34,4 @@ run_haskell hpc markup \
   "--hpcdir=dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/mix/Matching-0.1.0.0" \
   "--hpcdir=dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/mix/test-matching"
 
+run_haskell sh -c 'find dist-newstyle -name "*.mix" | xargs rm'
