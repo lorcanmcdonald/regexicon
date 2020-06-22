@@ -1,4 +1,5 @@
-FROM haskell:8.6
+ARG GHC_VERSION=latest
+FROM haskell:${GHC_VERSION}
 
 RUN apt-get update && \
   apt-get install -y libpcre3-dev && \
