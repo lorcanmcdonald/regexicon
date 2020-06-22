@@ -1,8 +1,10 @@
-{-# LANGUAGE OverloadedStrings, ViewPatterns #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
+
 module Main where
+
 import Control.Concurrent.Async
 import Control.Monad.IO.Class
-import Data.Monoid
 import Data.String.Conv
 import Data.Text (Text, stripPrefix, stripSuffix)
 import qualified Data.Text.Lazy.Encoding as T
@@ -16,10 +18,10 @@ import Web.Scotty as S
 main :: IO ()
 main = scotty 80 $ do
   middleware logStdout
-  middleware . gzip $ def {gzipFiles = GzipCacheFolder "/tmp/" }
+  middleware . gzip $ def {gzipFiles = GzipCacheFolder "/tmp/"}
   get "/" $ do
-    re <- param "q" `rescue` (\ _ -> return "")
-    n <- param "n" `rescue` (\ _ -> return 5)
+    re <- param "q" `rescue` (\_ -> return "")
+    n <- param "n" `rescue` (\_ -> return 5)
     let n' = if n <= 20 then n else 20
     result <- liftIO $ race (quitAfter (20 * 1000)) (selectMatches n' . toS . cleanRE $ re)
     case result of
@@ -35,7 +37,7 @@ main = scotty 80 $ do
     file $ "./style/" <> f
   post "/regex/" $ do
     re <- body
-    n <- param "n" `rescue` (\ _ -> return 15)
+    n <- param "n" `rescue` (\_ -> return 15)
     let n' = if n <= 20 then n else 20
     result <- liftIO $ race (quitAfter (20 * 1000)) (selectMatches n' . toS . cleanRE . toS $ re)
     case result of

@@ -1,6 +1,5 @@
 {
   "presets": [
-    ["env", { "targets": { "uglify": false } }],
-    ["react"]
+    "@babel/preset-react"
   ]
 }

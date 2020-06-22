@@ -4,6 +4,22 @@ IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 
+"$DIR/script/update"
+
+run_node() {
+  set +u
+  docker run \
+      --rm \
+      -e HOME=/opt/build/obj \
+      -ti \
+      -u "$(id -u "${USER}"):$(id -g "${USER}")" \
+      -v "$DIR/js:/opt/build" \
+      -w /opt/build \
+      node:14.3 \
+        $1 $2 $3 $4 $5 $6 $7 $8 $9
+  set -u
+}
+
 set +e
 docker kill candidates
 docker rm candidates
@@ -12,7 +28,6 @@ set -e
 docker run \
   -p 3000:80 \
   -d \
-  --rm \
   -ti \
   -v "$DIR/js/dist:/opt/service/js" \
   -v "$DIR/style:/opt/service/style" \
@@ -20,5 +35,5 @@ docker run \
   lorcan/regex-candidates
 
 pushd "$DIR/js"
-webpack --progress --watch
+run_node "./node_modules/.bin/webpack" --progress --watch --mode=development
 popd

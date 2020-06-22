@@ -20,13 +20,30 @@ library
   exposed-modules:
     Matching
     Matching.Server.Views
+    Test.QuickCheck.Regex.Exemplify
+    Test.QuickCheck.Regex.PCRE
+    Test.QuickCheck.Regex.PCRE.Parse
+    Test.QuickCheck.Regex.PCRE.RegexRenderer
+    Test.QuickCheck.Regex.PCRE.Render
+    Test.QuickCheck.Regex.PCRE.Types
+    Test.QuickCheck.Regex.PCRE.Types.Backslashes
+    Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+    Test.QuickCheck.Regex.PCRE.Types.Metacharacters
+    Test.QuickCheck.Regex.PCRE.Types.Pattern
+    Test.QuickCheck.Regex.PCRE.Types.Regex
+    Test.QuickCheck.Regex.PCRE.Types.Quantifiable
+    Test.QuickCheck.Regex.PCRE.Types.Ranges
+    Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
   build-depends:       QuickCheck
                      , aeson
                      , base >=4.6
                      , blaze-html
                      , blaze-markup
                      , bytestring
-                     , quickcheck-regex
+                     , data-default
+                     , lens
+                     , parsec
+                     , pretty-simple
                      , regex-tdfa
                      , scotty
                      , string-conv
@@ -39,9 +56,9 @@ executable Matching
   -- other-modules:       
   -- other-extensions:    
   build-depends:       Matching
+                     , aeson
                      , async
                      , base >=4.6
-                     , aeson
                      , http-types
                      , scotty
                      , string-conv
@@ -49,5 +66,67 @@ executable Matching
                      , transformers
                      , wai-extra
   hs-source-dirs:      src/Matching/Server/
-  ghc-options: -O2 -threaded -rtsopts -with-rtsopts=-N -Wall
+  ghc-options: -O2 -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
+  default-language:    Haskell2010
+
+Test-suite test-matching
+  Hs-Source-Dirs: 
+    src/Tests/
+    src
+  type: exitcode-stdio-1.0
+  Main-is: Main.hs
+  other-modules:       
+      Test.QuickCheck.Regex.Exemplify
+      Test.QuickCheck.Regex.PCRE
+      Test.QuickCheck.Regex.PCRE.Parse
+      Test.QuickCheck.Regex.PCRE.RegexRenderer
+      Test.QuickCheck.Regex.PCRE.Render
+      Test.QuickCheck.Regex.PCRE.Types
+      Test.QuickCheck.Regex.PCRE.Types.Backslashes
+      Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+      Test.QuickCheck.Regex.PCRE.Types.Metacharacters
+      Test.QuickCheck.Regex.PCRE.Types.Pattern
+      Test.QuickCheck.Regex.PCRE.Types.Quantifiable
+      Test.QuickCheck.Regex.PCRE.Types.Ranges
+      Test.QuickCheck.Regex.PCRE.Types.Regex
+      Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
+
+  autogen-modules:       
+      Test.QuickCheck.Regex.Exemplify
+      Test.QuickCheck.Regex.PCRE
+      Test.QuickCheck.Regex.PCRE.Parse
+      Test.QuickCheck.Regex.PCRE.RegexRenderer
+      Test.QuickCheck.Regex.PCRE.Render
+      Test.QuickCheck.Regex.PCRE.Types
+      Test.QuickCheck.Regex.PCRE.Types.Backslashes
+      Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+      Test.QuickCheck.Regex.PCRE.Types.Metacharacters
+      Test.QuickCheck.Regex.PCRE.Types.Pattern
+      Test.QuickCheck.Regex.PCRE.Types.Quantifiable
+      Test.QuickCheck.Regex.PCRE.Types.Ranges
+      Test.QuickCheck.Regex.PCRE.Types.Regex
+      Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
+
+
+  ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
+  Build-depends: QuickCheck
+                , Matching
+                , aeson
+                , ansi-terminal
+                , attoparsec
+                , base
+                , data-default
+                , delay
+                , extra
+                , lens
+                , parsec
+                , pretty-simple
+                , regex-pcre
+                , string-conv
+                , tasty >= 0.10.1
+                , tasty-hunit
+                , tasty-quickcheck
+                , text
+                , unordered-containers
+                , vector
   default-language:    Haskell2010

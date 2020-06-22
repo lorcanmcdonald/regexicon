@@ -3,21 +3,30 @@ set -euo pipefail
 IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
+GHC_VERSION=8.8.3
 
 mkdir -p "$DIR/obj"
+mkdir -p "$DIR/dist-newstyle"
+
+docker build \
+  -t lorcan/haskell-build:$GHC_VERSION \
+  --build-arg GHC_VERSION=$GHC_VERSION \
+  --file "$DIR/containers/haskell-build.Dockerfile" \
+  "$DIR"
 
 run_haskell() {
   set +u
   docker run \
       --rm \
-      -e HOME=/opt/build/obj \
       -ti \
+      -e LC_ALL=C.UTF-8 \
       -v "$DIR/:/opt/build" \
       -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
-      -v "$DIR/obj/dist:/opt/build/dist" \
-      -v "$DIR/obj/home:/root/" \
+      -v "$DIR/obj/dist-newstyle:/opt/build/dist-newstyle" \
+      -v "$DIR/obj/cabal-store:/root/.cabal/store" \
+      -v "$DIR/obj/cabal-packages:/root/.cabal/packages" \
       -w /opt/build \
-      haskell:8.0 \
+      lorcan/haskell-build:$GHC_VERSION \
         $1 $2 $3 $4 $5 $6 $7 $8 $9
   set -u
 }
@@ -28,22 +37,23 @@ run_node() {
       --rm \
       -e HOME=/opt/build/obj \
       -ti \
-      -u $(id -u ${USER}):$(id -g ${USER}) \
+      -u "$(id -u "${USER}"):$(id -g "${USER}")" \
       -v "$DIR/js:/opt/build" \
       -w /opt/build \
-      node:8.0 \
+      node:14.3 \
         $1 $2 $3 $4 $5 $6 $7 $8 $9
   set -u
 }
 
-run_haskell cabal sandbox init
-sudo chown -R "$USER" "$DIR"
-run_haskell sh -c "cabal update && cabal install --dependencies-only"
-run_haskell cabal build
+run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-update"
+run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-build"
 
 run_node npm install
 run_node "./node_modules/.bin/webpack" \
   --config "webpack.config.js" \
   --mode=production
 
-docker build -t lorcan/regex-candidates --file "$DIR/containers/service.Dockerfile" "$DIR"
+docker build \
+  -t lorcan/regex-candidates \
+  --build-arg GHC_VERSION=$GHC_VERSION \
+  --file "$DIR/containers/service.Dockerfile" "$DIR"
