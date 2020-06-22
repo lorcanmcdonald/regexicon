@@ -22,14 +22,12 @@ module Test.QuickCheck.Regex.PCRE.Types
     nonalphanumeric,
     orderedRange,
     positiveOrderedRange,
-    regexChars,
   )
 where
 
 import Control.Lens ((^?), element)
 import Control.Lens.Combinators (_Left, over)
 import Control.Monad
-import Test.QuickCheck
 import Test.QuickCheck.Regex.PCRE.Types.Backslashes
 import Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
 import Test.QuickCheck.Regex.PCRE.Types.Metacharacters
@@ -40,9 +38,6 @@ import Test.QuickCheck.Regex.PCRE.Types.Regex
 import Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
 import Text.ParserCombinators.Parsec
 import Text.Read
-
-regexChars :: Gen Char
-regexChars = oneof [choose ('a', 'z'), choose ('A', 'Z'), choose ('0', '9')] -- TODO Extend to non-metacharacter chars
 
 class SubpatternContainer a where
   numSubpatterns :: a -> Int
