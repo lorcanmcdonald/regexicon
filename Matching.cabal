@@ -76,6 +76,11 @@ Test-suite test-matching
   type: exitcode-stdio-1.0
   Main-is: Main.hs
   other-modules:       
+      BackslashPatternTests
+      Helpers
+      MatchingTests
+      ParseTests
+      SubpatternTests
       Test.QuickCheck.Regex.Exemplify
       Test.QuickCheck.Regex.PCRE
       Test.QuickCheck.Regex.PCRE.Parse
