@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -73,10 +74,9 @@ instance Arbitrary Quantifiable where
     let shrunk :: [[CharacterClassCharacter]]
         shrunk = shrink (x : xs)
      in map
-          ( \l ->
-              case l of
-                [] -> CharacterClass x []
-                (a : as) -> CharacterClass a as
+          ( \case
+              [] -> CharacterClass x []
+              (a : as) -> CharacterClass a as
           )
           shrunk
   shrink (NegatedCharacterClass _ []) = []
