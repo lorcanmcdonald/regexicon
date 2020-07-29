@@ -30,9 +30,10 @@ library
     Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
     Test.QuickCheck.Regex.PCRE.Types.Metacharacters
     Test.QuickCheck.Regex.PCRE.Types.Pattern
-    Test.QuickCheck.Regex.PCRE.Types.Regex
     Test.QuickCheck.Regex.PCRE.Types.Quantifiable
     Test.QuickCheck.Regex.PCRE.Types.Ranges
+    Test.QuickCheck.Regex.PCRE.Types.Regex
+    Test.QuickCheck.Regex.PCRE.Types.SubpatternContainer
     Test.QuickCheck.Regex.PCRE.Types.RegexCharacter
   build-depends:       QuickCheck
                      , aeson
@@ -80,6 +81,8 @@ Test-suite test-matching
       Helpers
       MatchingTests
       ParseTests
+      RangesTests
+      RenderTests
       SubpatternTests
       Test.QuickCheck.Regex.Exemplify
       Test.QuickCheck.Regex.PCRE

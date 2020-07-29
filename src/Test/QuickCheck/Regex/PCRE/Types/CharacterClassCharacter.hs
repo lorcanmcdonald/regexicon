@@ -116,7 +116,8 @@ instance Arbitrary ClassBackslashSequence where
       [ pure CCHyphen,
         pure CCDigit
       ]
-  shrink _ = []
+  shrink CCHyphen = []
+  shrink CCDigit = [CCHyphen]
 
 instance Exemplify ClassBackslashSequence where
   examples CCHyphen = pure "-"

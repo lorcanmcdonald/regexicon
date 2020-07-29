@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -14,8 +13,11 @@ import Data.Char
 import Data.Data
 import Data.Data.Lens
 import Data.Functor (($>))
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NonEmpty
 import Numeric (readHex, readOct, showHex, showOct)
 import Test.QuickCheck
+import qualified Test.QuickCheck.Modifiers as Modifiers
 import Test.QuickCheck.Regex.Exemplify
 import Test.QuickCheck.Regex.PCRE.RegexRenderer
 import Test.QuickCheck.Regex.PCRE.Types.Backslashes
@@ -29,8 +31,8 @@ data Quantifiable
   | AmbiguousNumberSequence String
   | Backslash BackslashSequence
   | BackReference Int Pattern
-  | CharacterClass CharacterClassCharacter [CharacterClassCharacter]
-  | NegatedCharacterClass CharacterClassCharacter [CharacterClassCharacter]
+  | CharacterClass (NonEmpty CharacterClassCharacter)
+  | NegatedCharacterClass (NonEmpty CharacterClassCharacter)
   | Subpattern Pattern
   deriving (Data, Eq, Show)
 
@@ -39,6 +41,14 @@ instance Plated Quantifiable where
 
 regexChars :: Gen Char
 regexChars = oneof [choose ('a', 'z'), choose ('A', 'Z'), choose ('0', '9')] -- TODO Extend to non-metacharacter chars
+
+genNonempty :: Arbitrary a => Gen (NonEmpty a)
+genNonempty = NonEmpty.fromList . Modifiers.getNonEmpty <$> arbitrary
+
+shrinkNonempty :: Arbitrary a => NonEmpty a -> [NonEmpty a]
+shrinkNonempty a =
+  NonEmpty.fromList . Modifiers.getNonEmpty
+    <$> (shrink . Modifiers.NonEmpty . NonEmpty.toList $ a)
 
 instance Arbitrary Quantifiable where
   arbitrary = sized quant'
@@ -49,8 +59,8 @@ instance Arbitrary Quantifiable where
             [ pure AnyCharacter,
               Character <$> regexChars,
               Backslash <$> arbitrary,
-              CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- CharacterClass must have at least one element
-              NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
+              CharacterClass <$> genNonempty, -- CharacterClass must have at least one element
+              NegatedCharacterClass <$> genNonempty
             ]
       quant' n
         | n >= 0 && n <= 3 -- Subpattern can cause very deep trees at larger sizes
@@ -59,45 +69,38 @@ instance Arbitrary Quantifiable where
             [ pure AnyCharacter,
               Character <$> regexChars,
               Backslash <$> arbitrary,
-              CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- CharacterClass must have at least one element
-              NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- NegatedCharacterClass must have at least one element
+              CharacterClass <$> genNonempty,
+              NegatedCharacterClass <$> genNonempty,
               Subpattern <$> arbitrary
             ]
       quant' _ = pure AnyCharacter
 
   shrink AnyCharacter = []
-  shrink (Character _) = []
-  shrink self@(AmbiguousNumberSequence _) = [self]
-  shrink (Backslash s) = Backslash <$> shrink s
-  shrink (CharacterClass _ []) = []
-  shrink (CharacterClass x xs) =
-    let shrunk :: [[CharacterClassCharacter]]
-        shrunk = shrink (x : xs)
-     in map
-          ( \case
-              [] -> CharacterClass x []
-              (a : as) -> CharacterClass a as
-          )
-          shrunk
-  shrink (NegatedCharacterClass _ []) = []
-  shrink (NegatedCharacterClass x xs) =
-    [NegatedCharacterClass x []]
-      <> ((`NegatedCharacterClass` []) <$> shrink x)
-      <> map (`NegatedCharacterClass` []) xs
-  shrink self@(BackReference _ _) = [self]
+  shrink (Character _) = [AnyCharacter]
+  shrink (AmbiguousNumberSequence _) = [AnyCharacter]
+  shrink (Backslash s) = [AnyCharacter] <> (Backslash <$> shrink s)
+  shrink (CharacterClass list) =
+    [AnyCharacter]
+      <> [ CharacterClass . NonEmpty.fromList $ []
+         ]
+      <> ( CharacterClass
+             <$> shrinkNonempty list
+         )
+  shrink (NegatedCharacterClass c) = [AnyCharacter] <> [CharacterClass c]
+  shrink (BackReference _ _) = [AnyCharacter]
   shrink (Subpattern p) = Subpattern <$> shrink p
 
 instance Exemplify Quantifiable where
   examples AnyCharacter = fmap (: "") regexChars
-  examples (AmbiguousNumberSequence _) = error "Should not generate an AmbiguousNumberSequence"
+  examples (AmbiguousNumberSequence sq) = error ("Should not generate an AmbiguousNumberSequence \"" <> sq <> "\"")
   examples (Backslash b) = examples b
   examples (BackReference _ p) = examples p
   examples (Character c) = elements [[c]]
-  examples (CharacterClass firstChar chars) =
-    oneof $ examples <$> (firstChar : chars)
-  examples (NegatedCharacterClass firstChar chars) =
+  examples (CharacterClass chars) =
+    oneof $ examples <$> NonEmpty.toList chars
+  examples (NegatedCharacterClass chars) =
     (: []) <$> regexChars
-      `suchThat` (\a -> (not . any (inCharacterClassCharacter a)) (firstChar : chars))
+      `suchThat` (\a -> (not . any (inCharacterClassCharacter a)) chars)
   examples (Subpattern re) = examples re
 
 backslashSequence :: GenParser Char st Quantifiable
@@ -235,6 +238,6 @@ instance RegexRenderer Quantifiable where
   render (Backslash NonWordCharacter) = "\\W"
   render (BackReference n _) = "\\" <> show n
   render (Character c) = [c]
-  render (CharacterClass firstChar chars) = "[" <> render firstChar <> concatMap render chars <> "]"
-  render (NegatedCharacterClass firstChar chars) = "[^" <> render firstChar <> concatMap render chars <> "]"
+  render (CharacterClass chars) = "[" <> concatMap render chars <> "]"
+  render (NegatedCharacterClass chars) = "[^" <> concatMap render chars <> "]"
   render (Subpattern re) = "(" <> render re <> ")"

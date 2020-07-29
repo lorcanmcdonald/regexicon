@@ -9,6 +9,7 @@ module Test.QuickCheck.Regex.PCRE
     Regex (..),
     Pattern (..),
     RegexCharacter (..),
+    RegexCharacterList (..),
     extractRange,
     matching,
     orderedRange,

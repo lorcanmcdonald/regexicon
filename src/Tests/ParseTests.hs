@@ -3,10 +3,12 @@ module ParseTests where
 import Control.Exception (SomeException, catch)
 import Control.Monad (replicateM)
 import Control.Time (delay)
-import Data.Either.Extra (fromRight, isLeft)
+import Data.Either.Extra (fromRight, isLeft, isRight)
 import Data.List (intercalate, isInfixOf)
+import Data.List.NonEmpty (fromList, nonEmpty)
 import Data.Maybe (fromJust)
 import Data.String.Conv (toS)
+import Helpers
 import System.Console.ANSI
 import System.IO (hFlush, stdout)
 import Test.QuickCheck.Regex.PCRE
@@ -15,7 +17,6 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
 import Text.Regex.PCRE hiding (Regex)
-import Helpers
 
 parseTests :: [TestTree]
 parseTests =
@@ -37,56 +38,76 @@ parseTests =
           "[\\d]x"
           ( "[\\d]"
               `shouldBe` Regex
-                ( Alternative
-                    [ Quant
-                        ( CharacterClass
-                            ( fromRight
-                                (error "Left")
-                                (characterClassCharacter "\\d")
+                ( Alternative . fromList $
+                    [ RegexCharacterList
+                        [ Quant
+                            ( CharacterClass . fromJust . nonEmpty $
+                                [ fromRight
+                                    (error "Left")
+                                    (characterClassCharacter "\\d")
+                                ]
                             )
-                            []
-                        )
+                        ]
                     ]
-                    []
                 )
           ),
         testCase
           "[a\\-b]"
           ( "[a\\-b]"
               `shouldBe` Regex
-                ( Alternative
-                    [ Quant
-                        ( CharacterClass
-                            (fromRight (error "Left a") (characterClassCharacter "a"))
-                            [ fromRight (error "Left -") (characterClassCharacter "\\-"),
-                              fromRight (error "Left b") (characterClassCharacter "b")
-                            ]
-                        )
+                ( Alternative . fromList $
+                    [ RegexCharacterList
+                        [ Quant
+                            ( CharacterClass . fromJust . nonEmpty $
+                                [ fromRight (error "Left a") (characterClassCharacter "a"),
+                                  fromRight (error "Left -") (characterClassCharacter "\\-"),
+                                  fromRight (error "Left b") (characterClassCharacter "b")
+                                ]
+                            )
+                        ]
                     ]
-                    []
                 )
           ),
         testCase
           "(a|b)"
           ( "(a|b)"
               `shouldBe` Regex
-                ( Alternative
-                    [ Quant
-                        ( Subpattern
-                            ( Alternative
-                                [Quant (Character 'a')]
-                                [ [Quant (Character 'b')]
-                                ]
+                ( Alternative . fromList $
+                    [ RegexCharacterList
+                        [ Quant
+                            ( Subpattern
+                                ( Alternative . fromList $
+                                    [ RegexCharacterList [Quant (Character 'a')],
+                                      RegexCharacterList [Quant (Character 'b')]
+                                    ]
+                                )
                             )
-                        )
+                        ]
                     ]
-                    []
                 )
           ),
         testCase
           "[0-9a-f]{32}"
           test_website_example,
-        testCase "\\d" test_digit
+        testCase "\\d" test_digit,
+        testCase
+          "^$"
+          ( "^$"
+              `shouldBe` StartAndEndOfString (Alternative . fromList $ [RegexCharacterList []])
+          ),
+        testCase
+          "a|b|"
+          ( "a|b|"
+              `shouldBe` Regex
+                ( Alternative . fromList $
+                    [ RegexCharacterList
+                        [ Quant (Character 'a')
+                        ],
+                      RegexCharacterList [Quant (Character 'b')],
+                      RegexCharacterList []
+                    ]
+                )
+          )
       ],
     testGroup
       "Failure cases"
@@ -102,6 +123,9 @@ parseTests =
           "|a"
           test_empty_first_alternative,
         testCase
+          "a||"
+          test_double_empty_alternative,
+        testCase
           "\\x{1,2}"
           test_hexZero_unquantifiable
       ],
@@ -114,9 +138,9 @@ parseTests =
         testCase
           "transitive example: a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:\\1\\x0"
           (isTransitive "a|a.|([a-b]+)|a{1,3}\\s\\W\\[\\*\\:\\1\\x0"),
-        -- testCase
-        --   "transitive example: \\x"
-        --   (isTransitive "\\x"),
+        testCase
+          "transitive example: \\x"
+          (isTransitive "\\x"),
         testCase
           "transitive example: \\x0"
           (isTransitive "\\x0")
@@ -138,7 +162,7 @@ prop_matching_produces_valid_matches regex =
     validRegex re = do
       ex <- examples re
       let result = filter (not . pcreMatch re) . fmap (<> "\n") $ ex
-      -- debugPrint re ex
+      debugPrint re ex
       if not (null result)
         then do
           debugPrint re result
@@ -166,7 +190,6 @@ prop_matching_produces_valid_matches regex =
           return True
         else do
           putStrLn . toS . toText $ regexEx
-          print x
           return False
     debugPrint re ex = do
       delay (1 :: Integer)
@@ -197,6 +220,13 @@ test_empty_first_alternative =
     . parseRegex
     $ "|a"
 
+test_double_empty_alternative :: Assertion
+test_double_empty_alternative =
+  assertBool "Parsed invalid alternatives"
+    . isLeft
+    . parseRegex
+    $ "a||"
+
 test_empty_character_class :: Assertion
 test_empty_character_class =
   assertBool "Parsed empty character class"
@@ -220,14 +250,14 @@ test_invalid_pattern =
     $ "*"
 
 test_empty :: Assertion
-test_empty = assertBool "Empty pattern doesn't fail" . isLeft . parseRegex $ ""
+test_empty = assertBool "Empty pattern doesn't fail" . isRight . parseRegex $ ""
 
 test_digit :: Assertion
 test_digit =
   assertEqual
     "Incorrectly parsed pattern"
     (parseRegex "\\d")
-    (Right (Regex (Alternative [Quant (Backslash Digit)] [])))
+    (Right (Regex (Alternative . fromList $ [RegexCharacterList [Quant (Backslash Digit)]])))
 
 test_website_example :: Assertion
 test_website_example =
@@ -236,18 +266,19 @@ test_website_example =
     (parseRegex "[0-9a-f]{32}")
     ( Right
         ( Regex
-            ( Alternative
-                [ Meta
-                    ( MinMax
-                        ( CharacterClass
-                            (fromRight (error "Left") (characterClassCharacter "0-9"))
-                            [ fromRight (error "Left") (characterClassCharacter "a-f")
-                            ]
+            ( Alternative . fromList $
+                [ RegexCharacterList
+                    [ Meta
+                        ( MinMax
+                            ( CharacterClass . fromJust . nonEmpty $
+                                [ fromRight (error "Left") (characterClassCharacter "0-9"),
+                                  fromRight (error "Left") (characterClassCharacter "a-f")
+                                ]
+                            )
+                            (fromJust . positiveOrderedRange 32 $ 32)
                         )
-                        (fromJust . positiveOrderedRange 32 $ 32)
-                    )
+                    ]
                 ]
-                []
             )
         )
     )
@@ -257,7 +288,7 @@ test_zero_or_more =
   assertEqual
     "Incorrectly parsed pattern"
     ( Right
-        (Regex (Alternative [Meta (ZeroOrMore (Character 'a'))] []))
+        (Regex (Alternative . fromList $ [RegexCharacterList [Meta (ZeroOrMore (Character 'a'))]]))
     )
     (parseRegex "a*")
 
@@ -268,11 +299,12 @@ test_subpattern =
     (parseRegex "a(b)")
     ( Right
         ( Regex
-            ( Alternative
-                [ Quant (Character 'a'),
-                  Quant (Subpattern (Alternative [Quant (Character 'b')] []))
+            ( Alternative . fromList $
+                [ RegexCharacterList
+                    [ Quant (Character 'a'),
+                      Quant (Subpattern (Alternative . fromList $ [RegexCharacterList [Quant (Character 'b')]]))
+                    ]
                 ]
-                []
             )
         )
     )
@@ -283,9 +315,9 @@ test_single_char =
     "Incorrectly parsed pattern"
     ( Right
         ( Regex
-            ( Alternative
-                [Quant (Character 'a')]
-                []
+            ( Alternative . fromList $
+                [ RegexCharacterList [Quant (Character 'a')]
+                ]
             )
         )
     )
@@ -297,21 +329,21 @@ test_one_or_more =
     "Incorrectly parsed pattern"
     (parseRegex "a+")
     ( Right
-        (Regex (Alternative [Meta (OneOrMore (Character 'a'))] []))
+        (Regex (Alternative . fromList $ [RegexCharacterList [Meta (OneOrMore (Character 'a'))]]))
     )
 
 test_match_end :: Assertion
 test_match_end =
   assertEqual
     "Incorrectly parsed pattern"
-    (Right (EndOfString (Alternative [Quant (Character 'a')] [])))
+    (Right (EndOfString (Alternative . fromList $ [RegexCharacterList [Quant (Character 'a')]])))
     (parseRegex "a$")
 
 test_multiple_char :: Assertion
 test_multiple_char =
   assertEqual
     "Incorrectly parsed pattern"
-    (Right (StartOfString (Alternative [Quant (Character 'a')] [])))
+    (Right (StartOfString (Alternative . fromList $ [RegexCharacterList [Quant (Character 'a')]])))
     (parseRegex "^a")
 
 test_meta_char :: Assertion
@@ -321,8 +353,9 @@ test_meta_char =
     ( Right
         ( Regex
             ( Alternative
-                [Quant AnyCharacter]
-                []
+                . fromList
+                $ [ RegexCharacterList [Quant AnyCharacter]
+                  ]
             )
         )
     )
@@ -332,14 +365,14 @@ test_escape_normal_character :: Assertion
 test_escape_normal_character =
   assertEqual
     "Incorrectly parsed pattern"
-    (Right (Regex (Alternative [Quant (Backslash (Nonalphanumeric '='))] [])))
+    (Right (Regex (Alternative . fromList $ [RegexCharacterList [Quant (Backslash (Nonalphanumeric '='))]])))
     (parseRegex "\\=")
 
 test_escape_metachar :: Assertion
 test_escape_metachar =
   assertEqual
     "Incorrectly parsed pattern"
-    (Right (Regex (Alternative [Quant (Backslash Asterisk)] [])))
+    (Right (Regex (Alternative . fromList $ [RegexCharacterList [Quant (Backslash Asterisk)]])))
     (parseRegex "\\*")
 
 test_negated_character_class :: Assertion
@@ -349,17 +382,19 @@ test_negated_character_class =
     (parseRegex "[^a]")
     ( Right
         ( Regex
-            ( Alternative
-                [ Quant
-                    ( NegatedCharacterClass
-                        ( fromRight
-                            (error "Left ")
-                            (characterClassCharacter "a")
+            ( Alternative . fromJust . nonEmpty $
+                [ RegexCharacterList
+                    [ Quant
+                        ( NegatedCharacterClass
+                            . fromJust
+                            . nonEmpty
+                            $ [ fromRight
+                                  (error "Left ")
+                                  (characterClassCharacter "a")
+                              ]
                         )
-                        []
-                    )
+                    ]
                 ]
-                []
             )
         )
     )
@@ -371,20 +406,20 @@ test_character_class =
     (parseRegex "[ab]")
     ( Right
         ( Regex
-            ( Alternative
-                [ Quant
-                    ( CharacterClass
-                        ( fromRight
-                            (error "Left")
-                            (characterClassCharacter "a")
+            ( Alternative . fromJust . nonEmpty $
+                [ RegexCharacterList
+                    [ Quant
+                        ( CharacterClass . fromJust . nonEmpty $
+                            [ fromRight
+                                (error "Left")
+                                (characterClassCharacter "a"),
+                              fromRight
+                                (error "Left")
+                                (characterClassCharacter "b")
+                            ]
                         )
-                        [ fromRight
-                            (error "Left")
-                            (characterClassCharacter "b")
-                        ]
-                    )
+                    ]
                 ]
-                []
             )
         )
     )
@@ -396,9 +431,10 @@ test_alternatives =
     (parseRegex "a|b")
     ( Right
         ( Regex
-            ( Alternative
-                [Quant (Character 'a')]
-                [[Quant (Character 'b')]]
+            ( Alternative . fromList $
+                [ RegexCharacterList [Quant (Character 'a')],
+                  RegexCharacterList [Quant (Character 'b')]
+                ]
             )
         )
     )
