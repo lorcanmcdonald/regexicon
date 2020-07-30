@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Test.QuickCheck.Regex.PCRE.Types.RegexCharacter (RegexCharacter (..)) where
+module Test.QuickCheck.Regex.PCRE.Types.RegexCharacter (RegexCharacter (..), RegexCharacterList (..)) where
 
 import Data.Data
 import GHC.Generics
@@ -26,9 +26,6 @@ instance Arbitrary RegexCharacter where
       ]
   shrink = genericShrink
 
-instance Exemplify [RegexCharacter] where
-  examples = fmap concat . traverse examples
-
 instance Exemplify RegexCharacter where
   examples (Quant q) = examples q
   examples (Meta m) = examples m
@@ -39,5 +36,15 @@ instance RegexRenderer RegexCharacter where
   render (Meta m) = render m
   render (Quoted s) = s
 
-instance RegexRenderer [RegexCharacter] where
-  render chars = concatMap render chars
+newtype RegexCharacterList = RegexCharacterList [RegexCharacter]
+  deriving (Data, Eq, Generic, Show)
+
+instance Arbitrary RegexCharacterList where
+  arbitrary = arbitrary
+  shrink = genericShrink
+
+instance Exemplify RegexCharacterList where
+  examples (RegexCharacterList chars) = fmap concat . traverse examples $ chars
+
+instance RegexRenderer RegexCharacterList where
+  render (RegexCharacterList chars) = concatMap render chars

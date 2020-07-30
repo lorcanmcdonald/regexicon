@@ -24,14 +24,16 @@ run_haskell() {
   set -u
 }
 
-run_haskell sh -c 'PATH=$PATH:/opt/build/bin cabal new-update && TASTY_QUICKCHECK_TESTS=20 cabal new-test --enable-coverage'
-
-run_haskell ls /opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/tix/test-matching/
-
-run_haskell hpc markup \
+set +e
+run_haskell sh -c 'PATH=$PATH:/opt/build/bin cabal new-update && TASTY_QUICKCHECK_TESTS=20 cabal new-test --enable-coverage' \
+ && run_haskell ls /opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/tix/test-matching/ \
+ && run_haskell hpc markup \
   /opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/tix/test-matching/test-matching.tix \
+  /opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/tix/Matching-0.1.0.0/Matching-0.1.0.0.tix \
   "--destdir=/opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/html/Matching-0.1.0.0" \
   "--hpcdir=dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/mix/Matching-0.1.0.0" \
-  "--hpcdir=dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/mix/test-matching"
+  "--hpcdir=dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/mix/test-matching" \
+  "--hpcdir=dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/mix/Matching-0.1.0.0/Matching-0.1.0.0-inplace/Matching.Server.Views.mix"
 
 run_haskell sh -c 'find dist-newstyle -name "*.mix" | xargs rm'
+set -e

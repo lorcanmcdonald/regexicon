@@ -1,35 +1,50 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.QuickCheck.Regex.PCRE.Parse (parseRegex) where
+module Test.QuickCheck.Regex.PCRE.Parse (parseRegex, rePattern) where
 
 import Control.Lens.Combinators (_Left, over)
+import Control.Monad (mzero)
 import Data.Default
-import Data.Functor (($>))
+import Data.List.NonEmpty
 import Test.QuickCheck.Regex.PCRE.Types
 import Text.ParserCombinators.Parsec
 
 parseRegex :: String -> Either String Regex
 parseRegex s = do
   re <- over _Left show . parse (regex <* eof) ("input: " <> s) $ s
-  resolveBackreferences re re
+  re' <- resolveBackreferences (subpatterns re) re
+  resolveBackreferences (subpatterns re') re'
 
 regex :: GenParser Char st Regex
 regex =
-  try (StartOfString <$> (string "^" *> rePattern))
+  try (StartAndEndOfString <$> (string "^" *> (rePattern <* string "$")))
     <|> try (EndOfString <$> (rePattern <* string "$"))
-    <|> try (StartAndEndOfString <$> (string "^" *> (rePattern <* string "$")))
+    <|> try (StartOfString <$> (string "^" *> rePattern))
     <|> try (Regex <$> rePattern)
     <?> "regex"
 
 rePattern :: GenParser Char st Pattern
 rePattern =
   try
-    ( Alternative
-        <$> (many1 regexCharacter <* string "|")
-        <*> many1 regexCharacter `sepBy1` string "|"
+    ( do
+        chars <- many1 regexCharacter `endBy` string "|"
+        case nonEmpty $ RegexCharacterList <$> chars of
+          Just cs -> return $ Alternative (cs <> fromList [RegexCharacterList []]) -- Where an "|" ends a regex we need to add an extra [], so that we don't lose that information
+          Nothing -> mzero
     )
-    <|> try (Alternative <$> many1 regexCharacter <*> pure [])
-      <?> "rePattern"
+    <|> try
+      ( do
+          chars <- many1 regexCharacter `sepBy` string "|"
+          case nonEmpty $ RegexCharacterList <$> chars of
+            Just cs -> return $ Alternative cs
+            Nothing -> mzero
+      )
+    <|> try
+      ( do
+          chars <- many regexCharacter
+          return . Alternative . fromList $ [RegexCharacterList chars] -- We're passing a list with one element here, so fromList is safe
+      )
+    <?> "rePattern"
 
 regexCharacter :: GenParser Char st RegexCharacter
 regexCharacter =
@@ -97,8 +112,10 @@ subpattern =
         <$> (string "(" *> rePattern <* string ")")
     )
     <|> try
-      ( Subpattern
-          <$> (string "()" $> Alternative [] [])
+      ( do
+          _ <- string "()"
+          pure $
+            Subpattern (Alternative . fromList $ [RegexCharacterList []])
       )
       <?> "Subpattern"
 
@@ -109,14 +126,24 @@ ambiguousNumberSequence =
 
 characterClass :: GenParser Char st Quantifiable
 characterClass =
-  CharacterClass
-    <$> (string "[" *> characterClassCharacters)
-    <*> (many characterClassCharacters <* string "]")
+  ( do
+      _ <- string "["
+      chars <- many1 characterClassCharacters
+      _ <- string "]"
+      case nonEmpty chars of
+        Just cs -> return $ CharacterClass cs
+        Nothing -> mzero
+  )
     <?> "CharacterClass"
 
 negatedCharacterClass :: GenParser Char st Quantifiable
 negatedCharacterClass =
-  NegatedCharacterClass
-    <$> (string "[^" *> characterClassCharacters)
-    <*> (many characterClassCharacters <* string "]")
+  ( do
+      _ <- string "[^"
+      chars <- many1 characterClassCharacters
+      _ <- string "]"
+      case nonEmpty chars of
+        Just cs -> return $ NegatedCharacterClass cs
+        Nothing -> mzero
+  )
     <?> "NegatedCharacterClass"

@@ -12,6 +12,7 @@ module Test.QuickCheck.Regex.PCRE.Types
     Quantifiable (..),
     Regex (..),
     RegexCharacter (..),
+    RegexCharacterList (..),
     SubpatternContainer (..),
     backslashSequence,
     characterClassCharacter,
@@ -25,9 +26,9 @@ module Test.QuickCheck.Regex.PCRE.Types
   )
 where
 
-import Control.Lens ((^?), element)
-import Control.Lens.Combinators (_Left, over)
+import Control.Lens ((^?), _Left, element, over)
 import Control.Monad
+-- import Debug.Trace
 import Test.QuickCheck.Regex.PCRE.Types.Backslashes
 import Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
 import Test.QuickCheck.Regex.PCRE.Types.Metacharacters
@@ -44,7 +45,7 @@ class SubpatternContainer a where
   numSubpatterns = length . subpatterns
 
   subpatterns :: a -> [Quantifiable]
-  resolveBackreferences :: Regex -> a -> Either String a
+  resolveBackreferences :: [Quantifiable] -> a -> Either String a
 
 instance SubpatternContainer Regex where
   subpatterns (Regex reChars) = subpatterns reChars
@@ -71,11 +72,10 @@ instance SubpatternContainer Metacharacter where
   resolveBackreferences re (MinMax q r) = MinMax <$> resolveBackreferences re q <*> pure r
 
 instance SubpatternContainer Pattern where
-  subpatterns (Alternative x xs) = concatMap subpatterns (x : xs)
-  resolveBackreferences re (Alternative x xs) = do
-    x' <- resolveBackreferences re x
+  subpatterns (Alternative xs) = concatMap subpatterns xs
+  resolveBackreferences re (Alternative xs) = do
     xs' <- mapM (resolveBackreferences re) xs
-    return $ Alternative x' xs'
+    return $ Alternative xs'
 
 instance SubpatternContainer Quantifiable where
   subpatterns AnyCharacter = []
@@ -83,36 +83,45 @@ instance SubpatternContainer Quantifiable where
   subpatterns (AmbiguousNumberSequence _) = []
   subpatterns (Backslash _) = []
   subpatterns (BackReference _ _) = []
-  subpatterns (CharacterClass _ _) = []
-  subpatterns (NegatedCharacterClass _ _) = []
+  subpatterns (CharacterClass _) = []
+  subpatterns (NegatedCharacterClass _) = []
   subpatterns self@(Subpattern reChars) = self : subpatterns reChars
 
   resolveBackreferences _ self@AnyCharacter = pure self
   resolveBackreferences _ self@(Character _) = pure self
   resolveBackreferences _ self@(Backslash _) = pure self
   resolveBackreferences _ self@(BackReference _ _) = pure self
-  resolveBackreferences _ self@(CharacterClass _ _) = pure self
-  resolveBackreferences _ self@(NegatedCharacterClass _ _) = pure self
+  resolveBackreferences _ self@(CharacterClass _) = pure self
+  resolveBackreferences _ self@(NegatedCharacterClass _) = pure self
   resolveBackreferences re (Subpattern reChars) = Subpattern <$> resolveBackreferences re reChars
-  resolveBackreferences re (AmbiguousNumberSequence str) =
+  resolveBackreferences patterns (AmbiguousNumberSequence str) =
     case maybeBackref str of
       Nothing -> asBackslash str
       Just a -> Right a
     where
       maybeBackref :: String -> Maybe Quantifiable
       maybeBackref backRefStr = do
+        -- traceShowM patterns
         patternIndex <- readMaybe backRefStr
-        subpattern <- subpatterns re ^? element (patternIndex - 1)
+        subpattern <- patterns ^? element (patternIndex - 1)
         case subpattern of
           Subpattern s -> return $ BackReference patternIndex s
           _ -> mzero
       asBackslash :: String -> Either String Quantifiable
-      asBackslash backlashStr = over _Left show . parse backslashSequence "" $ ("\\" <> backlashStr)
+      asBackslash backlashStr =
+        over _Left show
+          . parse backslashSequence ""
+          $ ("\\" <> backlashStr)
 
-instance SubpatternContainer [RegexCharacter] where
-  subpatterns = concatMap subpatterns
+instance SubpatternContainer RegexCharacterList where
+  subpatterns (RegexCharacterList chars) =
+    concatMap
+      subpatterns
+      chars
 
-  resolveBackreferences re = mapM (resolveBackreferences re)
+  resolveBackreferences re (RegexCharacterList chars) = do
+    list <- mapM (resolveBackreferences re) chars
+    return . RegexCharacterList $ list
 
 instance SubpatternContainer RegexCharacter where
   subpatterns (Quant q) = subpatterns q

@@ -8,10 +8,11 @@ import GHC.Generics
 import Test.QuickCheck
 import Test.QuickCheck.Regex.Exemplify
 import Test.QuickCheck.Regex.PCRE.RegexRenderer
-import {-# SOURCE #-} Test.QuickCheck.Regex.PCRE.Types.Quantifiable
-  ( Quantifiable (),
-    backslashSequence,
-  )
+-- import {-# SOURCE #-} Test.QuickCheck.Regex.PCRE.Types.Quantifiable
+--   ( Quantifiable (),
+--     backslashSequence,
+--   )
+import Test.QuickCheck.Regex.PCRE.Types.Quantifiable
 import Test.QuickCheck.Regex.PCRE.Types.Ranges
 import Text.ParserCombinators.Parsec
 
@@ -43,7 +44,15 @@ instance Arbitrary Metacharacter where
         if q == bsZero
           then arbitrary :: Gen Metacharacter
           else return $ MinMax q r
-  shrink = genericShrink
+
+  shrink x = subterms x <> recursivelyShrink x
+
+-- shrink (ZeroOrMore AnyCharacter) = []
+-- shrink (ZeroOrMore q) = ZeroOrMore <$> shrink q
+-- shrink (OneOrMore q) = [ZeroOrMore q] <> (OneOrMore <$> shrink q)
+-- shrink (MinMax q range) =
+--   [ZeroOrMore q]
+--     <> (MinMax <$> shrink q <*> shrink range)
 
 instance Exemplify Metacharacter where
   examples (ZeroOrMore q) = fmap concat . listOf $ examples q
