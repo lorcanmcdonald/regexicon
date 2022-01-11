@@ -5,6 +5,9 @@ IFS=$'\n\t'
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 GHC_VERSION=8.8.3
 
+# shellcheck source=script/Prelude
+source "$DIR/script/Prelude"
+
 mkdir -p "$DIR/obj"
 mkdir -p "$DIR/dist-newstyle"
 
@@ -13,37 +16,6 @@ docker build \
   --build-arg GHC_VERSION=$GHC_VERSION \
   --file "$DIR/containers/haskell-build.Dockerfile" \
   "$DIR"
-
-run_haskell() {
-  set +u
-  docker run \
-      --rm \
-      -ti \
-      -e LC_ALL=C.UTF-8 \
-      -v "$DIR/:/opt/build" \
-      -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
-      -v "$DIR/obj/dist-newstyle:/opt/build/dist-newstyle" \
-      -v "$DIR/obj/cabal-store:/root/.cabal/store" \
-      -v "$DIR/obj/cabal-packages:/root/.cabal/packages" \
-      -w /opt/build \
-      lorcan/haskell-build:$GHC_VERSION \
-        $1 $2 $3 $4 $5 $6 $7 $8 $9
-  set -u
-}
-
-run_node() {
-  set +u
-  docker run \
-      --rm \
-      -e HOME=/opt/build/obj \
-      -ti \
-      -u "$(id -u "${USER}"):$(id -g "${USER}")" \
-      -v "$DIR/js:/opt/build" \
-      -w /opt/build \
-      node:14.3 \
-        $1 $2 $3 $4 $5 $6 $7 $8 $9
-  set -u
-}
 
 run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-update"
 run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-build"
