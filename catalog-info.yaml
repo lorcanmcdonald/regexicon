@@ -4,7 +4,7 @@ metadata:
   name: regexicon
   annotations:
     github.com/project-slug: lorcanmcdonald/regexicon
-    backstage.io/techdocs-ref: url: https://github.com/lorcanmcdonald/regexicon/blob/master/README.md
+    backstage.io/techdocs-ref: url:https://github.com/lorcanmcdonald/regexicon/blob/master/README.md
 spec:
   type: website
   lifecycle: experimental
