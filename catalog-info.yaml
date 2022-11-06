@@ -5,6 +5,6 @@ metadata:
   annotations:
     github.com/project-slug: lorcanmcdonald/regexicon
 spec:
-  type: other
-  lifecycle: unknown
+  type: website
+  lifecycle: experimental
   owner: Lorcan McDonald
