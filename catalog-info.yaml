@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: regexicon
+  annotations:
+    github.com/project-slug: lorcanmcdonald/regexicon
+spec:
+  type: other
+  lifecycle: unknown
+  owner: Lorcan McDonald
