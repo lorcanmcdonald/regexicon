@@ -1,4 +1,13 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
+
 export TASTY_HIDE_SUCCESSES=True
 export TASTY_QUICKCHECK_TESTS=20
-ghcid --lint --command="cabal v2-repl test-matching" --test="main"
+
+ghcid \
+  --lint \
+  --command="cabal v2-repl test-matching" \
+  --test="main"

@@ -26,7 +26,6 @@ run_haskell() {
 
 set +e
 run_haskell sh -c 'PATH=$PATH:/opt/build/bin cabal new-update && TASTY_QUICKCHECK_TESTS=20 cabal new-test --enable-coverage' \
- && run_haskell ls /opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/tix/test-matching/ \
  && run_haskell hpc markup \
   /opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/tix/test-matching/test-matching.tix \
   /opt/build/dist-newstyle/build/x86_64-linux/ghc-$GHC_VERSION/Matching-0.1.0.0/hpc/vanilla/tix/Matching-0.1.0.0/Matching-0.1.0.0.tix \
