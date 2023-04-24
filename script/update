@@ -5,6 +5,9 @@ IFS=$'\n\t'
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 GHC_VERSION=8.8.3
 
+# shellcheck source=script/Prelude
+source "$DIR/script/Prelude"
+
 mkdir -p "$DIR/obj"
 mkdir -p "$DIR/dist-newstyle"
 
