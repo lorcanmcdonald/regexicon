@@ -6,9 +6,7 @@ module Test.QuickCheck.Regex.PCRE.Types
     BackslashSequence (..),
     ClassBackslashSequence (..),
     Metacharacter (..),
-    OrderedRange,
     Pattern (..),
-    PositiveOrderedRange,
     Quantifiable (..),
     Regex (..),
     RegexCharacter (..),
@@ -17,18 +15,14 @@ module Test.QuickCheck.Regex.PCRE.Types
     backslashSequence,
     characterClassCharacter,
     characterClassCharacters,
-    extractPositiveRange,
     extractRange,
     inCharacterClassCharacter,
     nonalphanumeric,
-    orderedRange,
-    positiveOrderedRange,
   )
 where
 
 import Control.Lens ((^?), _Left, element, over)
 import Control.Monad
--- import Debug.Trace
 import Test.QuickCheck.Regex.PCRE.Types.Backslashes
 import Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
 import Test.QuickCheck.Regex.PCRE.Types.Metacharacters
@@ -64,10 +58,12 @@ instance SubpatternContainer Regex where
 
 instance SubpatternContainer Metacharacter where
   subpatterns (ZeroOrMore q) = subpatterns q
+  subpatterns (ZeroOrOne q) = subpatterns q
   subpatterns (OneOrMore q) = subpatterns q
   subpatterns (MinMax q _) = subpatterns q
 
   resolveBackreferences re (ZeroOrMore q) = ZeroOrMore <$> resolveBackreferences re q
+  resolveBackreferences re (ZeroOrOne q) = ZeroOrOne <$> resolveBackreferences re q
   resolveBackreferences re (OneOrMore q) = OneOrMore <$> resolveBackreferences re q
   resolveBackreferences re (MinMax q r) = MinMax <$> resolveBackreferences re q <*> pure r
 

@@ -43,7 +43,8 @@ regexChars :: Gen Char
 regexChars = oneof [choose ('a', 'z'), choose ('A', 'Z'), choose ('0', '9')] -- TODO Extend to non-metacharacter chars
 
 genNonempty :: Arbitrary a => Gen (NonEmpty a)
-genNonempty = NonEmpty.fromList . Modifiers.getNonEmpty <$> arbitrary
+genNonempty = sized $ \n ->
+  NonEmpty.fromList . take n . Modifiers.getNonEmpty <$> arbitrary
 
 shrinkNonempty :: Arbitrary a => NonEmpty a -> [NonEmpty a]
 shrinkNonempty a =

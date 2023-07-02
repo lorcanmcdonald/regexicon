@@ -20,28 +20,28 @@ prop_ordered_int a b =
     then isJust range
     else isNothing range
   where
-    range = orderedRange a b
+    range = countRange a b
 
 test_unordered_int :: Assertion
 test_unordered_int =
   assertBool
     "should not have created a range with backwards order"
-    (isNothing $ orderedRange (3 :: Int) (1 :: Int))
+    (isNothing $ countRange (3 :: Int) (1 :: Int))
 
 test_ordered_char :: Assertion
 test_ordered_char =
   assertBool
     "could not create ordered range"
-    (isJust $ orderedRange ('a' :: Char) ('b' :: Char))
+    (isJust $ characterRange ('a' :: Char) ('b' :: Char))
 
 test_positive_ordered :: Assertion
 test_positive_ordered =
   assertBool
     "could not create positive ordered range"
-    (isJust $ positiveOrderedRange (1 :: Int) (2 :: Int))
+    (isJust $ countRange (1 :: Int) (2 :: Int))
 
 test_negative_ordered :: Assertion
 test_negative_ordered =
   assertBool
     "should not have created a range with backwards order"
-    (isNothing $ orderedRange (-2 :: Int) (-1 :: Int))
+    (isNothing $ countRange (-2 :: Int) (-1 :: Int))

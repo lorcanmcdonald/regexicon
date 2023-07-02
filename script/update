@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
-GHC_VERSION=8.8.3
+GHC_VERSION=9.4.1
 
 # shellcheck source=script/Prelude
 source "$DIR/script/Prelude"
@@ -51,8 +51,8 @@ run_node() {
   set -u
 }
 
-run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-update"
-run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-build"
+run_haskell sh -c "cabal update"
+run_haskell sh -c "cabal build"
 
 run_node npm install
 run_node "./node_modules/.bin/webpack" \

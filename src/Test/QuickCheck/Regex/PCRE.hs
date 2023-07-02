@@ -4,7 +4,6 @@ module Test.QuickCheck.Regex.PCRE
   ( BackslashSequence (..),
     CharacterClassCharacter,
     Metacharacter (..),
-    OrderedRange,
     Quantifiable (..),
     Regex (..),
     Pattern (..),
@@ -12,9 +11,7 @@ module Test.QuickCheck.Regex.PCRE
     RegexCharacterList (..),
     extractRange,
     matching,
-    orderedRange,
     parseRegex,
-    positiveOrderedRange,
     toText,
   )
 where

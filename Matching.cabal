@@ -44,7 +44,9 @@ library
                      , lens
                      , parsec
                      , pretty-simple
+                     , range
                      , regex-tdfa
+                     , safe
                      , scotty
                      , string-conv
                      , text
@@ -61,6 +63,7 @@ executable Matching
                      , base >=4.6
                      , http-types
                      , parsec
+                     , range
                      , scotty
                      , string-conv
                      , text
@@ -117,8 +120,8 @@ Test-suite test-matching
 
 
   ghc-options: -rtsopts=all -with-rtsopts=-N -Wall -threaded -Werror
-  Build-depends: QuickCheck
-                , Matching
+  build-depends: QuickCheck
+                , Matching == 0.1.0.0
                 , aeson
                 , ansi-terminal
                 , attoparsec
@@ -130,6 +133,7 @@ Test-suite test-matching
                 , lens
                 , parsec
                 , pretty-simple
+                , range
                 , regex-pcre
                 , string-conv
                 , tasty >= 0.10.1

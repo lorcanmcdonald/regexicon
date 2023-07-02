@@ -13,6 +13,7 @@ import System.Console.ANSI
 import System.IO (hFlush, stdout)
 import Test.QuickCheck.Regex.PCRE
 import Test.QuickCheck.Regex.PCRE.Types
+import Test.QuickCheck.Regex.PCRE.Types.Types.Ranges
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
@@ -34,6 +35,8 @@ parseTests =
         testCase "a" test_single_char,
         testCase "a(b)" test_subpattern,
         testCase "a*" test_zero_or_more,
+        testCase "a?" test_zero_or_one,
+        testCase "a{2,}" test_two_or_more,
         testCase
           "[\\d]x"
           ( "[\\d]"
@@ -160,6 +163,7 @@ prop_matching_produces_valid_matches regex =
   where
     validRegex :: Regex -> IO Bool
     validRegex re = do
+      print re
       ex <- examples re
       let result = filter (not . pcreMatch re) . fmap (<> "\n") $ ex
       debugPrint re ex
@@ -275,7 +279,7 @@ test_website_example =
                                   fromRight (error "Left") (characterClassCharacter "a-f")
                                 ]
                             )
-                            (fromJust . positiveOrderedRange 32 $ 32)
+                            (fromJust . countRange 32 $ 32)
                         )
                     ]
                 ]
@@ -291,6 +295,24 @@ test_zero_or_more =
         (Regex (Alternative . fromList $ [RegexCharacterList [Meta (ZeroOrMore (Character 'a'))]]))
     )
     (parseRegex "a*")
+
+test_zero_or_one :: Assertion
+test_zero_or_one =
+  assertEqual
+    "Incorrectly parsed pattern"
+    ( Right
+        (Regex (Alternative . fromList $ [RegexCharacterList [Meta (ZeroOrOne (Character 'a'))]]))
+    )
+    (parseRegex "a?")
+
+test_two_or_more :: Assertion
+test_two_or_more =
+  assertEqual
+    "Incorrectly parsed pattern"
+    ( Right
+        (Regex (Alternative . fromList $ [RegexCharacterList [Meta (ZeroOrOne (Character 'a'))]]))
+    )
+    (parseRegex "a{2,}")
 
 test_subpattern :: Assertion
 test_subpattern =

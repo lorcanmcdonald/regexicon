@@ -7,13 +7,15 @@ import Control.Monad (mzero)
 import Data.Default
 import Data.List.NonEmpty
 import Test.QuickCheck.Regex.PCRE.Types
+import Test.QuickCheck.Regex.PCRE.Types.Ranges
 import Text.ParserCombinators.Parsec
 
 parseRegex :: String -> Either String Regex
 parseRegex s = do
   re <- over _Left show . parse (regex <* eof) ("input: " <> s) $ s
-  re' <- resolveBackreferences (subpatterns re) re
-  resolveBackreferences (subpatterns re') re'
+  let patterns = subpatterns re
+  patterns' <- subpatterns <$> resolveBackreferences patterns re
+  resolveBackreferences patterns' re
 
 regex :: GenParser Char st Regex
 regex =
@@ -61,9 +63,31 @@ character =
 metacharacter :: GenParser Char st Metacharacter
 metacharacter =
   try (ZeroOrMore <$> quantifiable <* string "*")
+    <|> try (ZeroOrOne <$> quantifiable <* string "?")
     <|> try (OneOrMore <$> quantifiable <* string "+")
     <|> try (MinMax <$> quantifiable <*> positiveIntRange)
     <?> "meta character"
+
+-- minRange :: GenParser Char st Int
+-- minRange =
+--   try
+--     ( do
+--         _ <- string "{"
+--         a <- many1 digit
+--         _ <- string ",}"
+--         case (read a :: Maybe Int) of
+--           Nothing -> fail "Could not parse range"
+--           Just x -> return $ Min x
+--     )
+
+-- maxRange :: GenParser Char st Int
+-- maxRange = do
+--   _ <- string "{,"
+--   a <- many1 digit
+--   _ <- string "}"
+--   case (readMay a :: Maybe Int) of
+--     Nothing -> fail "Could not parse range"
+--     Just x -> Max <$> x
 
 constrainedRange ::
   (Ord a, Read a, Default a) =>
@@ -91,8 +115,8 @@ constrainedRange constructor =
             Nothing -> fail "Could not create ordered range"
       )
 
-positiveIntRange :: GenParser Char st (PositiveOrderedRange Int)
-positiveIntRange = constrainedRange positiveOrderedRange
+positiveIntRange :: GenParser Char st (CountRange Int)
+positiveIntRange = constrainedRange countRange
 
 quantifiable :: GenParser Char st Quantifiable
 quantifiable =

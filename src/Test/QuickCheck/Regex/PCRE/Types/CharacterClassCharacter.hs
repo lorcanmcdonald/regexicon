@@ -16,6 +16,10 @@ import Test.QuickCheck
 import Test.QuickCheck.Regex.Exemplify
 import Test.QuickCheck.Regex.PCRE.RegexRenderer
 import Test.QuickCheck.Regex.PCRE.Types.Ranges
+  ( CharacterRange,
+    characterRange,
+    inCharacterRange,
+  )
 import Text.ParserCombinators.Parsec
 
 characterClassCharacter :: String -> Either String CharacterClassCharacter
@@ -23,15 +27,15 @@ characterClassCharacter = over _Left show . parse characterClassCharacters ""
 
 data CharacterClassCharacter
   = ClassLiteral Char
-  | ClassRange (OrderedRange Char)
+  | ClassRange (CharacterRange)
   | QuotedClassLiterals Char String
   | ClassBackslash ClassBackslashSequence
   deriving (Data, Eq, Show)
 
 instance Exemplify CharacterClassCharacter where
   examples (ClassLiteral c) = elements [[c]]
-  examples (ClassRange r) =
-    fmap (: "") . choose $ extractRange r
+  examples (ClassRange r) = examples r
+  -- fmap (: "") . choose $ extractRange r
   examples (QuotedClassLiterals c s) = oneof $ pure . (: []) <$> (c : s)
   examples (ClassBackslash s) = examples s
 
@@ -68,19 +72,19 @@ regexChars = oneof [choose ('a', 'z'), choose ('A', 'Z'), choose ('0', '9')] -- 
 
 inCharacterClassCharacter :: Char -> CharacterClassCharacter -> Bool
 inCharacterClassCharacter c (ClassLiteral l) = c == l
-inCharacterClassCharacter c (ClassRange r) =
-  c >= a && c <= b
-  where
-    (a, b) = extractRange r
+inCharacterClassCharacter c (ClassRange r) = inCharacterRange r c
+-- c >= a && c <= b
+-- where
+--   (a, b) = extractRange r
 inCharacterClassCharacter c (QuotedClassLiterals s q) = c `elem` (s : q)
 inCharacterClassCharacter c (ClassBackslash CCHyphen) = c == '-'
 inCharacterClassCharacter c (ClassBackslash CCDigit) = c `elem` ("0123456789" :: String)
 
 instance RegexRenderer CharacterClassCharacter where
   render (ClassLiteral c) = [c]
-  render (ClassRange r) =
-    let (c, d) = extractRange r
-     in [c] <> "-" <> [d]
+  render (ClassRange r) = render r
+  -- let (c, d) = extractRange r
+  --  in [c] <> "-" <> [d]
   render (QuotedClassLiterals c s) = "\\Q" <> [c] <> s <> "\\E"
   render (ClassBackslash s) = render s
 
@@ -91,7 +95,7 @@ characterClassCharacters =
         a <- validChars
         _ <- string "-"
         b <- validChars
-        case orderedRange a b of
+        case characterRange a b of
           Just range -> return $ ClassRange range
           Nothing -> fail "Range out of order in charcter class"
     )

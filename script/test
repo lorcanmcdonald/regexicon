@@ -8,7 +8,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 source "$DIR/script/Prelude"
 
 "$DIR/script/update"
-GHC_VERSION=8.8.3
+GHC_VERSION=9.4.1
 
 run_haskell() {
   set +u

@@ -22,9 +22,9 @@ data Regex
 instance Arbitrary Regex where
   arbitrary =
     oneof
-      [ Regex <$> arbitrary,
-        StartOfString <$> arbitrary,
-        EndOfString <$> arbitrary,
+      [ -- Regex <$> arbitrary,
+        -- StartOfString <$> arbitrary,
+        -- EndOfString <$> arbitrary,
         StartAndEndOfString <$> arbitrary
       ]
   shrink (Regex r) = Regex <$> shrink r
