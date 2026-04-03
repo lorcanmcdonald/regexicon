@@ -4,28 +4,23 @@ import PropTypes from "prop-types";
 import map from "ramda/src/map";
 import CookieBanner from "react-cookie-banner";
 
-const Examples = () =>
+const Examples = () => (
   <div className="examples" key="examples-container">
-    <span>
-      {"e.g.: "}
-    </span>
+    <span>{"e.g.: "}</span>
     <ul>
       <li>
-        <a href="/?q=[0-9a-f]{32}">
-          {"[0-9a-f]{32}"}
-        </a>
+        <a href="/?q=[0-9a-f]{32}">{"[0-9a-f]{32}"}</a>
       </li>
       <li>
-        <a href="/?q=[😀-😊]%2b">
-          {"[😀-😊]+"}
-        </a>
+        <a href="/?q=[😀-😊]%2b">{"[😀-😊]+"}</a>
       </li>
     </ul>
-  </div>;
+  </div>
+);
 
 Examples.displayName = "Examples";
 
-const SearchInput = props =>
+const SearchInput = (props) => (
   <form action="/" key="Search" method="GET">
     <input
       autoFocus
@@ -35,34 +30,36 @@ const SearchInput = props =>
       placeholder="[0-9a-f]{32}"
       value={props.query}
     />
-    <button>
-      {"🔍"}
-    </button>
-  </form>;
+    <button>{"🔍"}</button>
+  </form>
+);
 
 SearchInput.propTypes = {
-  onKeyUp: PropTypes.Func,
-  query: PropTypes.String
+  onKeyUp: PropTypes.func,
+  query: PropTypes.string,
 };
 
 SearchInput.displayName = "SearchInput";
 
-const getRegexCandidates = query =>
+const getRegexCandidates = (query) =>
   fetch("/regex/?n=5", {
     body: query,
-    method: "post"
-  }).then(res => res.json());
+    method: "post",
+  }).then((res) => res.json());
 
 class Main extends React.Component {
   constructor() {
     super();
     this.handleOnKeyUp = this.handleOnKeyUp.bind(this);
-    this.state = { error: [], query: "", results: [] };
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = urlParams.get("q") || "";
+
+    this.state = { error: [], query: query, results: [] };
   }
   componentWillMount() {
     if (this.props.query) {
       this.setState({ query: this.props.query });
-      getRegexCandidates(this.props.query).then(results => {
+      getRegexCandidates(this.props.query).then((results) => {
         if (results.type) {
           this.setState({ error: [results], results: [] });
         } else {
@@ -75,7 +72,7 @@ class Main extends React.Component {
     const query = e.target.value;
 
     this.setState({ query });
-    getRegexCandidates(query).then(results => {
+    getRegexCandidates(query).then((results) => {
       if (results.type) {
         this.setState({ error: [results], results: [] });
       } else {
@@ -91,13 +88,15 @@ class Main extends React.Component {
 
       results = (
         <div className="error">
-          {map(str => <p key={`result-${str}`}>{str}</p>)(lines)}
+          {map((str) => <p key={`result-${str}`}>{str}</p>)(lines)}
         </div>
       );
     } else if (this.state.results.length) {
       results = (
         <ul className="results">
-          {map(str => <li key={`result-${str}`}>{str}</li>)(this.state.results)}
+          {map((str) => <li key={`result-${str}`}>{str}</li>)(
+            this.state.results,
+          )}
         </ul>
       );
     }
@@ -113,9 +112,7 @@ class Main extends React.Component {
         </div>
         <div class="attribution">
           <p>
-            <a href="http://lorcanmcdonald.com">
-              By Lorcan McDonald
-            </a>
+            <a href="http://lorcanmcdonald.com">By Lorcan McDonald</a>
           </p>
         </div>
       </div>
@@ -125,7 +122,7 @@ class Main extends React.Component {
 
 Main.displayName = "Main";
 Main.propTypes = {
-  query: PropTypes.String
+  query: PropTypes.string,
 };
 
 export default Main;

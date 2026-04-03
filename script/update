@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
-GHC_VERSION=8.8.3
+GHC_VERSION=9.4.8
 
 # shellcheck source=script/Prelude
 source "$DIR/script/Prelude"
@@ -12,13 +12,13 @@ mkdir -p "$DIR/obj"
 mkdir -p "$DIR/dist-newstyle"
 
 docker build \
-  -t lorcan/haskell-build:$GHC_VERSION \
-  --build-arg GHC_VERSION=$GHC_VERSION \
+  -t "lorcan/haskell-build:$GHC_VERSION" \
+  --build-arg "GHC_VERSION=$GHC_VERSION" \
   --file "$DIR/containers/haskell-build.Dockerfile" \
   "$DIR"
 
-run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-update"
-run_haskell sh -c "cabal --symlink-bindir=/opt/build/bin new-build"
+run_haskell sh -c "cabal update"
+run_haskell sh -c "cabal build"
 
 run_node npm install
 run_node "./node_modules/.bin/webpack" \
@@ -27,5 +27,5 @@ run_node "./node_modules/.bin/webpack" \
 
 docker build \
   -t lorcan/regex-candidates \
-  --build-arg GHC_VERSION=$GHC_VERSION \
+  --build-arg GHC_VERSION="$GHC_VERSION" \
   --file "$DIR/containers/service.Dockerfile" "$DIR"

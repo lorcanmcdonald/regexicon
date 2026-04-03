@@ -29,7 +29,7 @@ data CharacterClassCharacter
   deriving (Data, Eq, Show)
 
 instance Exemplify CharacterClassCharacter where
-  examples (ClassLiteral c) = elements [[c]]
+  examples (ClassLiteral c) = return [c]
   examples (ClassRange r) =
     fmap (: "") . choose $ extractRange r
   examples (QuotedClassLiterals c s) = oneof $ pure . (: []) <$> (c : s)

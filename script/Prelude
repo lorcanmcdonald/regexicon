@@ -1,10 +1,9 @@
 #!/bin/bash
-GHC_VERSION=${GHC_VERSION:-8.8.3}
+GHC_VERSION=${GHC_VERSION:-9.4.8}
 run_haskell() {
   set +u
   docker run \
       --rm \
-      -ti \
       -e LC_ALL=C.UTF-8 \
       -v "$DIR/:/opt/build" \
       -v "$DIR/obj/cabal-sandbox:/opt/build/.cabal-sandbox" \
@@ -22,7 +21,6 @@ run_node() {
   docker run \
       --rm \
       -e HOME=/opt/build/obj \
-      -ti \
       -u "$(id -u "${USER}"):$(id -g "${USER}")" \
       -v "$DIR/js:/opt/build" \
       -w /opt/build \

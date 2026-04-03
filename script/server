@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 
 # shellcheck source=script/Prelude
 source "$DIR/script/Prelude"
@@ -20,6 +20,7 @@ docker run \
   -ti \
   -v "$DIR/js/dist:/opt/service/js" \
   -v "$DIR/style:/opt/service/style" \
+  -v "$DIR/font:/opt/service/font" \
   --name candidates \
   lorcan/regex-candidates
 

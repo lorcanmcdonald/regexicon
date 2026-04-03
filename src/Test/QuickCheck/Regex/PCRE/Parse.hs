@@ -2,7 +2,7 @@
 
 module Test.QuickCheck.Regex.PCRE.Parse (parseRegex) where
 
-import Control.Lens.Combinators (_Left, over)
+import Control.Lens.Combinators (over, _Left)
 import Data.Default
 import Data.Functor (($>))
 import Test.QuickCheck.Regex.PCRE.Types
@@ -29,7 +29,7 @@ rePattern =
         <*> many1 regexCharacter `sepBy1` string "|"
     )
     <|> try (Alternative <$> many1 regexCharacter <*> pure [])
-      <?> "rePattern"
+    <?> "rePattern"
 
 regexCharacter :: GenParser Char st RegexCharacter
 regexCharacter =
@@ -40,12 +40,14 @@ regexCharacter =
 
 character :: GenParser Char st Quantifiable
 character =
-  Character <$> noneOf "\\^$.[|()?*+{"
-    <?> "character"
+  Character
+    <$> noneOf "\\^$.[|()?*+{"
+      <?> "character"
 
 metacharacter :: GenParser Char st Metacharacter
 metacharacter =
-  try (ZeroOrMore <$> quantifiable <* string "*")
+  try (ZeroOrOne <$> quantifiable <* string "?")
+    <|> try (ZeroOrMore <$> quantifiable <* string "*")
     <|> try (OneOrMore <$> quantifiable <* string "+")
     <|> try (MinMax <$> quantifiable <*> positiveIntRange)
     <?> "meta character"
@@ -100,7 +102,7 @@ subpattern =
       ( Subpattern
           <$> (string "()" $> Alternative [] [])
       )
-      <?> "Subpattern"
+    <?> "Subpattern"
 
 ambiguousNumberSequence :: GenParser Char st Quantifiable
 ambiguousNumberSequence =
@@ -112,11 +114,11 @@ characterClass =
   CharacterClass
     <$> (string "[" *> characterClassCharacters)
     <*> (many characterClassCharacters <* string "]")
-    <?> "CharacterClass"
+      <?> "CharacterClass"
 
 negatedCharacterClass :: GenParser Char st Quantifiable
 negatedCharacterClass =
   NegatedCharacterClass
     <$> (string "[^" *> characterClassCharacters)
     <*> (many characterClassCharacters <* string "]")
-    <?> "NegatedCharacterClass"
+      <?> "NegatedCharacterClass"

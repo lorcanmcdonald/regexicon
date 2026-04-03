@@ -7,9 +7,10 @@ import MatchingTests
 import ParseTests
 import SubpatternTests
 import Test.Tasty
+import Test.Tasty.Ingredients.Rerun
 
 main :: IO ()
-main = defaultMain tests
+main = defaultMainWithRerun tests
 
 tests :: TestTree
 tests =

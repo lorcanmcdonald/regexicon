@@ -24,5 +24,6 @@ import Test.QuickCheck.Regex.PCRE.Parse
 import Test.QuickCheck.Regex.PCRE.Render
 import Test.QuickCheck.Regex.PCRE.Types
 
+-- | Produce a QuickCheck generator of Strings which match a given regex
 matching :: Regex -> Gen String
 matching = examples

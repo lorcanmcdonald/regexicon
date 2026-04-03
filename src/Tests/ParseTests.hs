@@ -30,6 +30,7 @@ parseTests =
         testCase "^a" test_multiple_char,
         testCase "a$" test_match_end,
         testCase "a+" test_one_or_more,
+        testCase "a?" test_any_single,
         testCase "a" test_single_char,
         testCase "a(b)" test_subpattern,
         testCase "a*" test_zero_or_more,
@@ -295,10 +296,19 @@ test_one_or_more :: Assertion
 test_one_or_more =
   assertEqual
     "Incorrectly parsed pattern"
-    (parseRegex "a+")
     ( Right
         (Regex (Alternative [Meta (OneOrMore (Character 'a'))] []))
     )
+    (parseRegex "a+")
+
+test_any_single :: Assertion
+test_any_single =
+  assertEqual
+    "Incorrectly parsed pattern"
+    ( Right
+        (Regex (Alternative [Meta (ZeroOrOne (Character 'a'))] []))
+    )
+    (parseRegex "a?")
 
 test_match_end :: Assertion
 test_match_end =

@@ -92,7 +92,7 @@ instance Exemplify Quantifiable where
   examples (AmbiguousNumberSequence _) = error "Should not generate an AmbiguousNumberSequence"
   examples (Backslash b) = examples b
   examples (BackReference _ p) = examples p
-  examples (Character c) = elements [[c]]
+  examples (Character c) = return [c]
   examples (CharacterClass firstChar chars) =
     oneof $ examples <$> (firstChar : chars)
   examples (NegatedCharacterClass firstChar chars) =

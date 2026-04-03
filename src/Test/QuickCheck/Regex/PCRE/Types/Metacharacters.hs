@@ -17,6 +17,7 @@ import Text.ParserCombinators.Parsec
 
 data Metacharacter
   = ZeroOrMore Quantifiable
+  | ZeroOrOne Quantifiable
   | OneOrMore Quantifiable
   | MinMax Quantifiable (PositiveOrderedRange Int)
   deriving (Data, Eq, Generic, Show)
@@ -30,6 +31,7 @@ instance Arbitrary Metacharacter where
   arbitrary =
     oneof
       [ ZeroOrMore <$> arbitrary,
+        ZeroOrOne <$> arbitrary,
         OneOrMore <$> arbitrary,
         minmax
       ]
@@ -47,6 +49,7 @@ instance Arbitrary Metacharacter where
 
 instance Exemplify Metacharacter where
   examples (ZeroOrMore q) = fmap concat . listOf $ examples q
+  examples (ZeroOrOne q) = fmap concat . oneof $ [listOf1 .examples$ q, return [""]]
   examples (OneOrMore q) = fmap concat . listOf1 $ examples q
   examples (MinMax q r) = do
     let (a, b) = extractPositiveRange r
@@ -55,6 +58,7 @@ instance Exemplify Metacharacter where
 
 instance RegexRenderer Metacharacter where
   render (ZeroOrMore q) = render q <> "*"
+  render (ZeroOrOne q) = render q <> "?"
   render (OneOrMore q) = render q <> "+"
   render (MinMax q range) = render q <> "{" <> show a <> "," <> show b <> "}"
     where

@@ -17,8 +17,7 @@ data Pattern
 
 instance Arbitrary Pattern where
   arbitrary =
-    oneof
-      [Alternative <$> listOf1 arbitrary <*> arbitrary]
+    Alternative <$> listOf1 arbitrary <*> arbitrary
 
   shrink (Alternative [] []) = []
   shrink (Alternative c []) = (`Alternative` []) <$> shrink c

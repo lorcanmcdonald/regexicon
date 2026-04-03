@@ -1,7 +1,6 @@
 {
   inputs = {
     # Default to the nixos-unstable branch
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.11";
 
     flake-utils.url = "github:numtide/flake-utils";
@@ -10,20 +9,15 @@
     inputs@{
       self,
       nixpkgs-stable,
-      nixpkgs-unstable,
       flake-utils,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs-unstable = import nixpkgs-unstable {
-          inherit system;
-        };
         pkgs-stable = import nixpkgs-stable {
           inherit system;
         };
-        pythonPackages = pkgs-unstable.python313Packages;
 
         buildInputs = with pkgs-stable; [
 
@@ -33,8 +27,15 @@
           haskell-language-server
           haskellPackages.hoogle
           ormolu
+          pcre
+          zlib
 
-          bat
+          typescript-language-server
+          nodePackages.typescript-language-server
+          nodePackages.eslint
+          nodePackages.prettier
+          vscode-langservers-extracted
+
           dockerfile-language-server-nodejs
           shfmt
           nodePackages.eslint
@@ -44,7 +45,7 @@
         packageName = "regexicon";
       in
 
-      with pkgs-unstable;
+      with pkgs-stable;
       {
         packages.${packageName} = haskellPackages.callCabal2nix packageName self rec {
           # Dependency overrides go here

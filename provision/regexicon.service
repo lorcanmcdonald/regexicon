@@ -1,0 +1,13 @@
+[Unit]
+Description=Regexicon service
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=docker
+ExecStart=/usr/bin/docker run --rm -p 80:80 lorcan/regex-candidates
+
+[Install]
+WantedBy=multi-user.target

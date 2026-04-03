@@ -40,4 +40,5 @@ instance RegexRenderer RegexCharacter where
   render (Quoted s) = s
 
 instance RegexRenderer [RegexCharacter] where
-  render chars = concatMap render chars
+  render = concatMap render
+

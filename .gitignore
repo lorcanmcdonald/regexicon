@@ -20,3 +20,5 @@ node_modules
 .HTF/
 .ghc.environment.x86_64-linux-8.6.5
 dist-newstyle/
+js/.DS_Store
+.DS_Store
