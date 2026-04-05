@@ -28,6 +28,7 @@ library
     Test.QuickCheck.Regex.PCRE.Types
     Test.QuickCheck.Regex.PCRE.Types.Backslashes
     Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+    Test.QuickCheck.Regex.PCRE.Types.Generators
     Test.QuickCheck.Regex.PCRE.Types.Metacharacters
     Test.QuickCheck.Regex.PCRE.Types.Pattern
     Test.QuickCheck.Regex.PCRE.Types.Regex

@@ -15,6 +15,7 @@ import Data.Functor (($>))
 import Test.QuickCheck
 import Test.QuickCheck.Regex.Exemplify
 import Test.QuickCheck.Regex.PCRE.RegexRenderer
+import Test.QuickCheck.Regex.PCRE.Types.Generators
 import Test.QuickCheck.Regex.PCRE.Types.Ranges
 import Text.ParserCombinators.Parsec
 
@@ -63,8 +64,6 @@ instance Arbitrary CharacterClassCharacter where
     QuotedClassLiterals <$> shrink c <*> shrink s
   shrink (ClassBackslash s) = ClassBackslash <$> shrink s
 
-regexChars :: Gen Char
-regexChars = oneof [choose ('a', 'z'), choose ('A', 'Z'), choose ('0', '9')] -- TODO Duplicate code, also Extend to non-metacharacter chars
 
 inCharacterClassCharacter :: Char -> CharacterClassCharacter -> Bool
 inCharacterClassCharacter c (ClassLiteral l) = c == l

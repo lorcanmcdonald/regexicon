@@ -20,6 +20,7 @@ import Test.QuickCheck.Regex.Exemplify
 import Test.QuickCheck.Regex.PCRE.RegexRenderer
 import Test.QuickCheck.Regex.PCRE.Types.Backslashes
 import Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+import Test.QuickCheck.Regex.PCRE.Types.Generators
 import {-# SOURCE #-} Test.QuickCheck.Regex.PCRE.Types.Pattern
 import Text.ParserCombinators.Parsec
 
@@ -36,9 +37,6 @@ data Quantifiable
 
 instance Plated Quantifiable where
   plate = uniplate
-
-regexChars :: Gen Char
-regexChars = oneof [choose ('a', 'z'), choose ('A', 'Z'), choose ('0', '9')] -- TODO Extend to non-metacharacter chars
 
 instance Arbitrary Quantifiable where
   arbitrary = sized quant'
