@@ -5,6 +5,7 @@ module Main where
 import BackslashPatternTests
 import MatchingTests
 import ParseTests
+import RoundTripTests
 import SubpatternTests
 import Test.Tasty
 import Test.Tasty.Ingredients.Rerun
@@ -19,5 +20,6 @@ tests =
     [ testGroup "Parse" parseTests,
       testGroup "Subpatterns" subpatternTests,
       testGroup "Backslash patterns" backslashPatterns,
-      testGroup "Matching" matchingTests
+      testGroup "Matching" matchingTests,
+      testGroup "Round-trip" roundTripTests
     ]

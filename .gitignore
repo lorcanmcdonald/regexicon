@@ -22,3 +22,5 @@ node_modules
 dist-newstyle/
 js/.DS_Store
 .DS_Store
+.direnv/
+.claude/

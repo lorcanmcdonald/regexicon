@@ -80,6 +80,7 @@ Test-suite test-matching
       Helpers
       MatchingTests
       ParseTests
+      RoundTripTests
       SubpatternTests
       Test.QuickCheck.Regex.Exemplify
       Test.QuickCheck.Regex.PCRE
@@ -89,6 +90,7 @@ Test-suite test-matching
       Test.QuickCheck.Regex.PCRE.Types
       Test.QuickCheck.Regex.PCRE.Types.Backslashes
       Test.QuickCheck.Regex.PCRE.Types.CharacterClassCharacter
+      Test.QuickCheck.Regex.PCRE.Types.Generators
       Test.QuickCheck.Regex.PCRE.Types.Metacharacters
       Test.QuickCheck.Regex.PCRE.Types.Pattern
       Test.QuickCheck.Regex.PCRE.Types.Quantifiable

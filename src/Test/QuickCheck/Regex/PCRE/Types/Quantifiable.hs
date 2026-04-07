@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.QuickCheck.Regex.PCRE.Types.Quantifiable
@@ -43,24 +43,24 @@ instance Arbitrary Quantifiable where
     where
       quant' n
         | n > 3 =
-          oneof
-            [ pure AnyCharacter,
-              Character <$> regexChars,
-              Backslash <$> arbitrary,
-              CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- CharacterClass must have at least one element
-              NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
-            ]
+            oneof
+              [ pure AnyCharacter,
+                Character <$> regexChars,
+                Backslash <$> arbitrary,
+                CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- CharacterClass must have at least one element
+                NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary) -- NegatedCharacterClass must have at least one element
+              ]
       quant' n
         | n >= 0 && n <= 3 -- Subpattern can cause very deep trees at larger sizes
           =
-          oneof
-            [ pure AnyCharacter,
-              Character <$> regexChars,
-              Backslash <$> arbitrary,
-              CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- CharacterClass must have at least one element
-              NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- NegatedCharacterClass must have at least one element
-              Subpattern <$> arbitrary
-            ]
+            oneof
+              [ pure AnyCharacter,
+                Character <$> regexChars,
+                Backslash <$> arbitrary,
+                CharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- CharacterClass must have at least one element
+                NegatedCharacterClass <$> arbitrary <*> ((:) <$> arbitrary <*> arbitrary), -- NegatedCharacterClass must have at least one element
+                Subpattern <$> arbitrary
+              ]
       quant' _ = pure AnyCharacter
 
   shrink AnyCharacter = []
@@ -94,8 +94,9 @@ instance Exemplify Quantifiable where
   examples (CharacterClass firstChar chars) =
     oneof $ examples <$> (firstChar : chars)
   examples (NegatedCharacterClass firstChar chars) =
-    (: []) <$> regexChars
-      `suchThat` (\a -> (not . any (inCharacterClassCharacter a)) (firstChar : chars))
+    (: [])
+      <$> regexChars
+        `suchThat` (\a -> (not . any (inCharacterClassCharacter a)) (firstChar : chars))
   examples (Subpattern re) = examples re
 
 backslashSequence :: GenParser Char st Quantifiable
@@ -227,8 +228,8 @@ instance RegexRenderer Quantifiable where
   render (Backslash NotHorizontalWhiteSpace) = "\\H"
   render (Backslash WhiteSpace) = "\\s"
   render (Backslash NotWhiteSpace) = "\\S"
-  render (Backslash VerticalWhiteSpace) = "\\h"
-  render (Backslash NotVerticalWhiteSpace) = "\\H"
+  render (Backslash VerticalWhiteSpace) = "\\v"
+  render (Backslash NotVerticalWhiteSpace) = "\\V"
   render (Backslash WordCharacter) = "\\w"
   render (Backslash NonWordCharacter) = "\\W"
   render (BackReference n _) = "\\" <> show n
