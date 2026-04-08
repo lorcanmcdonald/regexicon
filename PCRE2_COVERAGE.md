@@ -18,7 +18,7 @@ The catch-all case `Nonalphanumeric <$> satisfy (not . isAlphaNum)` handles non-
 | `\d`, `\D` | Digit / non-digit | ✅ Implemented |
 | `\h`, `\H` | Horizontal whitespace / negation | ✅ Implemented |
 | `\s`, `\S` | Whitespace / negation | ✅ Implemented |
-| `\v`, `\V` | Vertical whitespace / negation | ✅ Implemented (but see render bugs below) |
+| `\v`, `\V` | Vertical whitespace / negation | ✅ Implemented |
 | `\w`, `\W` | Word character / negation | ✅ Implemented |
 | `\b`, `\B` | Word boundary / non-word boundary | ❌ Not implemented |
 | `\A` | Start of subject | ❌ Not implemented |
@@ -33,15 +33,6 @@ The catch-all case `Nonalphanumeric <$> satisfy (not . isAlphaNum)` handles non-
 | `\g{n}`, `\gn` | Unambiguous backreference syntax | ❌ Not implemented |
 | `\N{U+hhhh}` | Unicode char by code point | ❌ Not implemented |
 
-### Known render bugs
-
-These constructors exist but render to the wrong string, breaking round-trips:
-
-| Constructor | Current render | Correct render |
-|-------------|---------------|----------------|
-| `VerticalWhiteSpace` | `"\\h"` | `"\\v"` |
-| `NotVerticalWhiteSpace` | `"\\H"` | `"\\V"` |
-
 ---
 
 ## `metacharacter` / `Metacharacter`
@@ -51,8 +42,8 @@ These constructors exist but render to the wrong string, breaking round-trips:
 | `*` | Zero or more (greedy) | ✅ `ZeroOrMore` |
 | `+` | One or more (greedy) | ✅ `OneOrMore` |
 | `{n,m}` | Between n and m (greedy) | ✅ `MinMax` |
-| `?` | Zero or one | ❌ Entirely absent from the type |
-| `{n}` | Exactly n | ❌ Not implemented |
+| `?` | Zero or one | ✅ `ZeroOrOne` |
+| `{n}` | Exactly n | ✅ `MinMax` (parsed as `{n,n}`) |
 | `{n,}` | n or more (unbounded) | ❌ Not implemented |
 | `*?`, `+?`, `??`, `{n,m}?` | Lazy/non-greedy variants | ❌ Not implemented |
 | `*+`, `++`, `?+`, `{n,m}+` | Possessive variants | ❌ Not implemented |
@@ -115,29 +106,20 @@ Only `\-` (`CCHyphen`) and `\d` (`CCDigit`) are handled inside `[...]`. All othe
 
 ## Suggested priority order
 
-1. **`?` quantifier** — extremely common, requires new `Metacharacter` constructor
-2. **Render bugs for `\v`/`\V`** — trivial fix, currently breaks round-trip properties
-3. **`\b`/`\B`/`\A`/`\Z`/`\z`** — common anchors, straightforward `BackslashSequence` additions
-4. **`(?:...)`** — very common, structurally mirrors existing `Subpattern`
-5. **Lazy quantifiers** — common in real-world regexes
-6. **Extended `ClassBackslashSequence`** — fills out character class coverage
-7. **Lookaheads/lookbehinds** — moderate complexity
-8. **Named groups, conditionals, recursion** — significant complexity, lower urgency
+1. **`\b`/`\B`/`\A`/`\Z`/`\z`** — common anchors, straightforward `BackslashSequence` additions
+2. **`(?:...)`** — very common, structurally mirrors existing `Subpattern`
+3. **Lazy quantifiers** — common in real-world regexes
+4. **Extended `ClassBackslashSequence`** — fills out character class coverage
+5. **Lookaheads/lookbehinds** — moderate complexity
+6. **Named groups, conditionals, recursion** — significant complexity, lower urgency
 
 ---
 
-## QuickCheck testing approach
+## Testing
 
-Each unimplemented feature maps naturally to a generator + property:
+Round-trip tests live in `src/Tests/RoundTripTests.hs` and are structured for red/green tracking:
 
-```haskell
--- Round-trip property: rendered regex should parse back to the same AST
-prop_roundTrip :: (Arbitrary a, RegexRenderer a, Eq a) => a -> Bool
-prop_roundTrip x = parse (render x) == Right x
+- **`Round-trip > Implemented`** — QuickCheck properties and specific cases for all working features; these should pass.
+- **`Round-trip > Not yet implemented`** — One `assertBool (isRight (parseRegex ...))` test per unimplemented feature; these fail until the feature is added. When implementing a feature, move its test into the implemented group and tighten the assertion to check the full expected AST.
 
--- Example: once \b is added to BackslashSequence
-prop_wordBoundaryRoundTrip :: Property
-prop_wordBoundaryRoundTrip = forAll (pure WordBoundary) prop_roundTrip
-```
-
-The existing `Exemplify` typeclass provides the other direction — given a parsed regex, generate strings that should match it — which can be verified against `regex-tdfa`.
+The `Exemplify` typeclass provides the complementary direction — given a parsed `Regex`, generate strings that should match it — verified against `regex-tdfa` in the `Matching` test group.
