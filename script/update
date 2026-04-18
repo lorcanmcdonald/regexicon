@@ -12,6 +12,7 @@ mkdir -p "$DIR/obj"
 mkdir -p "$DIR/dist-newstyle"
 
 docker build \
+  --platform linux/amd64 \
   -t lorcan/haskell-build:$GHC_VERSION \
   --build-arg GHC_VERSION=$GHC_VERSION \
   --file "$DIR/containers/haskell-build.Dockerfile" \
@@ -26,6 +27,7 @@ run_node "./node_modules/.bin/webpack" \
   --mode=production
 
 docker build \
+  --platform linux/amd64 \
   -t lorcan/regex-candidates \
   --build-arg GHC_VERSION=$GHC_VERSION \
   --file "$DIR/containers/service.Dockerfile" "$DIR"
