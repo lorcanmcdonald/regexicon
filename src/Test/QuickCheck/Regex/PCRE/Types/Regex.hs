@@ -9,8 +9,8 @@ import Data.Data.Lens
 import GHC.Generics
 import Test.QuickCheck
 import Test.QuickCheck.Regex.Exemplify
-import Test.QuickCheck.Regex.PCRE.Types.Pattern
 import Test.QuickCheck.Regex.PCRE.RegexRenderer
+import Test.QuickCheck.Regex.PCRE.Types.Pattern
 
 data Regex
   = Regex Pattern
@@ -22,12 +22,15 @@ data Regex
 instance Arbitrary Regex where
   arbitrary =
     oneof
-      [ Regex <$> arbitrary,
-        StartOfString <$> arbitrary,
-        EndOfString <$> arbitrary,
+      [ -- Regex <$> arbitrary,
+        -- StartOfString <$> arbitrary,
+        -- EndOfString <$> arbitrary,
         StartAndEndOfString <$> arbitrary
       ]
-  shrink = genericShrink
+  shrink (Regex r) = Regex <$> shrink r
+  shrink (StartOfString r) = [Regex r]
+  shrink (EndOfString r) = [Regex r]
+  shrink (StartAndEndOfString r) = [Regex r]
 
 instance Plated Regex where
   plate = uniplate

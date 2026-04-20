@@ -1,8 +1,9 @@
 module SubpatternTests where
 
 import Data.Either.Extra (fromRight)
-import Test.QuickCheck.Regex.PCRE.Types
+import Data.List.NonEmpty (fromList)
 import Test.QuickCheck.Regex.PCRE
+import Test.QuickCheck.Regex.PCRE.Types
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -24,11 +25,11 @@ subpatternTests =
         ( numSubpatterns
             . fromRight
               ( Regex
-                  ( Alternative [] []
-                  )
+                  (Alternative . fromList $ [RegexCharacterList []])
               )
             $ parseRegex "((a(b)))"
         )
+
     test_count_empty_subpatterns :: Assertion
     test_count_empty_subpatterns =
       assertEqual
@@ -37,8 +38,7 @@ subpatternTests =
         ( numSubpatterns
             . fromRight
               ( Regex
-                  ( Alternative [] []
-                  )
+                  (Alternative . fromList $ [RegexCharacterList []])
               )
             $ parseRegex "()()"
         )

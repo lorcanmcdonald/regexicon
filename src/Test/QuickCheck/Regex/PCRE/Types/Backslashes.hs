@@ -100,8 +100,7 @@ instance Arbitrary BackslashSequence where
       octalLiteral =
         NonprintingHexCodeBraces <$> arbitrary `suchThat` (> 9)
 
-  
-  shrink _ = []
+  shrink _ = [Dot]
 
 nonalphanumeric :: Gen Char
 nonalphanumeric =

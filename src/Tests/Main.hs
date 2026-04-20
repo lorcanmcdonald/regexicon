@@ -5,6 +5,8 @@ module Main where
 import BackslashPatternTests
 import MatchingTests
 import ParseTests
+import RangesTests
+-- import RenderTests
 import SubpatternTests
 import Test.Tasty
 
@@ -15,8 +17,10 @@ tests :: TestTree
 tests =
   testGroup
     ""
-    [ testGroup "Parse" parseTests,
-      testGroup "Subpatterns" subpatternTests,
-      testGroup "Backslash patterns" backslashPatterns,
-      testGroup "Matching" matchingTests
+    [ testGroup "Backslash patterns" backslashPatterns,
+      testGroup "Matching" matchingTests,
+      testGroup "Parse" parseTests,
+      testGroup "Ranges" rangesTests,
+      -- testGroup "Rendering" renderTests,
+      testGroup "Subpatterns" subpatternTests
     ]
