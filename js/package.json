@@ -40,6 +40,6 @@
     "eslint-plugin-jsx-a11y": "^5.1.0",
     "eslint-plugin-react": "^7.1.0",
     "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.2"
+    "webpack-cli": "^3.3.12"
   }
 }
